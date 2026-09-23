@@ -111,6 +111,20 @@ class InventoryController extends GetxController {
     searchQuery.value = query.trim();
   }
 
+  /// Get all categories (merges default categories with custom categories from products)
+  List<String> get allCategories {
+    final Set<String> categoriesSet = {};
+    categoriesSet.addAll(AppConstants.defaultCategories);
+
+    for (var p in products) {
+      if (p.category.isNotEmpty) {
+        categoriesSet.add(p.category);
+      }
+    }
+
+    return categoriesSet.toList();
+  }
+
   /// Get products for a specific category
   List<ProductModel> getProductsForCategory(String category) {
     return products.where((p) => p.category == category).toList();

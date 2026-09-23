@@ -17,6 +17,22 @@ class AppConstants {
     'متفرق سامان',
   ];
 
+  // Default Measurement Units List
+  static const List<String> defaultUnits = [
+    'عدد',
+    'فٹ',
+    'سیٹ',
+    'مربع فٹ',
+    'میٹر',
+    'گیلن',
+    'کلو',
+    'پیکٹ',
+    'جوڑا',
+    'انچ',
+    'کارتوس',
+    'لیٹر',
+  ];
+
   // Default Companies List per Category
   static const Map<String, List<String>> defaultCategoryCompanies = {
     'پائپ اور فٹنگ': ['ماسٹر', 'فاران', 'پاپولر', 'تارڑ', 'ایشیا', 'ٹویو'],

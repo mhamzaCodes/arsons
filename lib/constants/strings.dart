@@ -1,13 +1,13 @@
 /// App-wide static text strings in Urdu with English references
 class AppStrings {
   // Store Header Details
-  static const String appTitle = 'AR Sons - الحرم ٹائل اینڈ سینٹری سٹور';
+  static const String appTitle = 'الحرم ٹائل اینڈ سینٹری سٹور';
   static const String appSubtitle = 'انوینٹری اینڈ ریٹ لسٹ سسٹم';
   static const String proprietorLabel = 'پروپرائیٹر:';
-  static const String proprietorName = 'حاجی محمد ارشد / محمد عثمان';
+  static const String proprietorName = 'حاجی محمد حماد';
   static const String phoneLabel = 'فون نمبر:';
-  static const String phoneNumber = '0300-8887174';
-  static const String storeAddress = 'مین جی ٹی روڈ، باجوڑہ/کامونکی';
+  static const String phoneNumber = '0300-1234567';
+  static const String storeAddress = 'نارنگ منڈی';
 
   // Navigation & Screen Titles
   static const String dashboardTitle = 'ڈیش بورڈ';
