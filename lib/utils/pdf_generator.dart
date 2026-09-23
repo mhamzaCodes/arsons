@@ -1,3 +1,7 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/painting.dart' as fl;
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -22,6 +26,10 @@ class ProductItemEntry extends PdfRowEntry {
   ProductItemEntry(this.product, this.itemNumber);
 }
 
+// =============================================================================
+// Design tokens / layout (A4 = 595.28 x 841.89 pt)
+// =============================================================================
+
 class _Palette {
   static const navy = PdfColor.fromInt(0xFF0F2A43);
   static const navySoft = PdfColor.fromInt(0xFF34506B);
@@ -34,33 +42,41 @@ class _Palette {
   static const badgeBg = PdfColor.fromInt(0xFFF1F4F8);
 }
 
+// Everything is fixed-width on purpose (no Expanded/Flex + Table).
+const double _marginH = 18;
+const double _marginTop = 18;
+const double _marginBottom = 16;
+const double _colGap = 12;
+
+// 2 * 273 + 12 = 558  <=  595.28 - 36 = 559.28
+const double _tableWidth = 273;
+const double _rateW = 42;
+const double _noW = 32;
+const double _nameW = _tableWidth - (_rateW * 3) - _noW; // 115
+
+// Nastaleeq needs more vertical room than Naskh.
+const double _rowH = 22;
+const double _headH = 24;
+
+/// Rows (company banners + items) per column. 27 * 2 = 54 rows per page.
+/// If a page ever overflows, lower this number.
+const int _rowsPerColumn = 27;
+
+// Bundled font used (a) as the Nastaleeq family name registered in pubspec and
+// (b) as the vector font for digits / fallback.
+const String _defaultNastaleeqFamily = 'JameelNooriNastaleeq';
+const String _nastaleeqAsset = 'assets/fonts/JameelNooriNastaleeq.ttf';
+
+// =============================================================================
+// Public API
+// =============================================================================
+
 /// Rate-list PDF: always A4, two side-by-side tables per page.
 /// Fill order (RTL): RIGHT table first, then LEFT table, then next page.
 class PdfGenerator {
   static final _reshaper = ArabicReshaper();
 
-  // ---- Layout constants (A4 = 595.28 x 841.89 pt) -------------------------
-  // Everything is fixed-width on purpose: no Expanded/Flex + Table, which is
-  // what triggered "childSize <= maxChildExtent".
-  static const double _marginH = 18;
-  static const double _marginTop = 18;
-  static const double _marginBottom = 16;
-  static const double _colGap = 12;
-
-  // 2 * 273 + 12 = 558  <=  595.28 - 36 = 559.28
-  static const double _tableWidth = 273;
-  static const double _rateW = 42;
-  static const double _noW = 32;
-  static const double _nameW = _tableWidth - (_rateW * 3) - _noW; // 115
-
-  static const double _rowH = 20;
-  static const double _headH = 24;
-
-  /// Rows (company banners + items) per column. 30 * 2 = 60 rows per page.
-  /// Lower this if you enlarge fonts / row height.
-  static const int _rowsPerColumn = 30;
-
-  /// Reshapes Urdu text so characters connect properly in PDF
+  /// Reshapes Urdu text so characters connect properly in vector PDF text.
   static String formatUrdu(String input) {
     if (input.trim().isEmpty) return input;
     try {
@@ -72,50 +88,338 @@ class PdfGenerator {
 
   /// Generates printable A4 PDF bytes for the rate list.
   ///
-  /// [pageFormat] is accepted only for backward compatibility and is IGNORED:
-  /// PdfPreview / Printing.layoutPdf pass their own format (e.g. Letter with
-  /// 72pt margins) which is what broke the layout. We always render A4.
+  /// [pageFormat] is accepted only for backward compatibility and is IGNORED
+  /// (always A4).
+  ///
+  /// [useNastaleeq] = true  -> Urdu text is rendered with Flutter's own text
+  ///   engine using [nastaleeqFamily] (same look as the app) and embedded in
+  ///   the PDF as high-resolution images.
+  /// [useNastaleeq] = false -> vector Noto Naskh text (selectable/searchable).
+  ///
+  /// [nastaleeqFamily] MUST match the `family:` name of Jameel Noori in your
+  /// pubspec.yaml.
   static Future<Uint8List> generateRateListPdf(
       List<ProductModel> products, {
         PdfPageFormat? pageFormat,
+        bool useNastaleeq = true,
+        String nastaleeqFamily = _defaultNastaleeqFamily,
       }) async {
-    final pdf = pw.Document();
+    final fonts = await _loadVectorFonts(preferBundled: useNastaleeq);
 
-    // ---- Fonts -------------------------------------------------------------
-    pw.Font urduFontRegular;
-    pw.Font urduFontBold;
-    try {
-      urduFontRegular = await PdfGoogleFonts.notoNaskhArabicRegular();
-      urduFontBold = await PdfGoogleFonts.notoNaskhArabicBold();
-    } catch (_) {
-      final fontData =
-      await rootBundle.load('assets/fonts/JameelNooriNastaleeq.ttf');
-      urduFontRegular = pw.Font.ttf(fontData);
-      urduFontBold = urduFontRegular;
+    final engine = _TextEngine(
+      useNastaleeq: useNastaleeq,
+      family: nastaleeqFamily,
+      vectorRegular: fonts.$1,
+      vectorBold: fonts.$2,
+    );
+
+    final builder = _RateListBuilder(
+      products: products,
+      engine: engine,
+      theme: pw.ThemeData.withFont(base: fonts.$1, bold: fonts.$2),
+    );
+
+    // Pass 1: dry run, only records which strings need rasterizing.
+    engine.recording = true;
+    builder.buildPages();
+    await engine.rasterizePending();
+
+    // Pass 2: real build using the rasterized text.
+    engine.recording = false;
+    final pdf = pw.Document();
+    for (final page in builder.buildPages()) {
+      pdf.addPage(page);
+    }
+    return pdf.save();
+  }
+
+  /// (regular, bold) vector fonts.
+  static Future<(pw.Font, pw.Font)> _loadVectorFonts({
+    required bool preferBundled,
+  }) async {
+    Future<(pw.Font, pw.Font)> bundled() async {
+      final data = await rootBundle.load(_nastaleeqAsset);
+      final f = pw.Font.ttf(data);
+      return (f, f);
     }
 
-    // ---- Group by company (keeps original order inside each company) -------
+    Future<(pw.Font, pw.Font)> google() async {
+      return (
+      await PdfGoogleFonts.notoNaskhArabicRegular(),
+      await PdfGoogleFonts.notoNaskhArabicBold(),
+      );
+    }
+
+    if (preferBundled) {
+      try {
+        return await bundled();
+      } catch (_) {
+        return await google();
+      }
+    }
+    try {
+      return await google();
+    } catch (_) {
+      return await bundled();
+    }
+  }
+}
+
+// =============================================================================
+// Text engine: Nastaleeq raster text (with vector fallback)
+// =============================================================================
+
+class _Req {
+  final String text;
+  final double size;
+  final PdfColor color;
+  final bool bold;
+  _Req(this.text, this.size, this.color, this.bold);
+}
+
+class _Raster {
+  final pw.MemoryImage image;
+  final double width; // PDF points
+  final double height; // PDF points
+  _Raster(this.image, this.width, this.height);
+}
+
+class _TextEngine {
+  _TextEngine({
+    required this.useNastaleeq,
+    required this.family,
+    required this.vectorRegular,
+    required this.vectorBold,
+  });
+
+  final bool useNastaleeq;
+  final String family;
+  final pw.Font vectorRegular;
+  final pw.Font vectorBold;
+
+  bool recording = false;
+  final Map<String, _Req> _pending = {};
+  final Map<String, _Raster> _cache = {};
+
+  /// 4x => ~288 dpi when printed at 100%. Sharp, still small files.
+  static const double _scale = 4;
+
+  static int _argb(PdfColor c) =>
+      (0xFF << 24) |
+      ((c.red * 255).round() << 16) |
+      ((c.green * 255).round() << 8) |
+      (c.blue * 255).round();
+
+  String _key(String t, double s, PdfColor c, bool b) =>
+      '${b ? 'b' : 'r'}|$s|${_argb(c)}|$t';
+
+  /// Urdu / mixed Urdu-English text. Pass RAW (un-reshaped) strings.
+  pw.Widget text(
+      String raw, {
+        required double size,
+        required PdfColor color,
+        bool bold = false,
+      }) {
+    final t = raw.trim();
+    if (t.isEmpty) return pw.SizedBox();
+
+    if (useNastaleeq) {
+      final key = _key(t, size, color, bold);
+      if (recording) {
+        _pending.putIfAbsent(key, () => _Req(t, size, color, bold));
+        return pw.SizedBox();
+      }
+      final r = _cache[key];
+      if (r != null) {
+        return pw.Image(
+          r.image,
+          width: r.width,
+          height: r.height,
+          fit: pw.BoxFit.fill,
+        );
+      }
+    }
+    return _vectorMixed(t, size: size, color: color, bold: bold);
+  }
+
+  Future<void> rasterizePending() async {
+    for (final e in _pending.entries.toList()) {
+      try {
+        _cache[e.key] = await _rasterize(e.value);
+      } catch (err, st) {
+        // Falls back to vector text for this string.
+        debugPrint('PDF text rasterize failed for "${e.value.text}": $err\n$st');
+      }
+    }
+    _pending.clear();
+  }
+
+  Future<_Raster> _rasterize(_Req r) async {
+    final painter = fl.TextPainter(
+      text: fl.TextSpan(
+        text: r.text,
+        style: fl.TextStyle(
+          fontFamily: family,
+          fontSize: r.size * _scale,
+          fontWeight: r.bold ? ui.FontWeight.w700 : ui.FontWeight.w400,
+          color: ui.Color(_argb(r.color)),
+        ),
+      ),
+      // Flutter's engine does proper shaping + bidi (same as in the app).
+      textDirection: ui.TextDirection.rtl,
+    )..layout();
+
+    const pad = 2;
+    final w = painter.width.ceil() + pad * 2;
+    final h = painter.height.ceil() + pad * 2;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+    painter.paint(canvas, const ui.Offset(2, 2));
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(w, h);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+
+    return _Raster(
+      pw.MemoryImage(
+        bytes!.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      ),
+      w / _scale,
+      h / _scale,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Vector fallback with manual RTL ordering (brackets / Latin safe)
+  // ---------------------------------------------------------------------------
+
+  static final RegExp _tokenRe = RegExp(
+    r'[A-Za-z0-9]+(?:[.\-/×][A-Za-z0-9]+)*' // PPR, 10, 60x60, 1.5, 3/4
+    r'|[()\[\]]' // brackets
+    r'|\s+' // whitespace
+    r'|[^\sA-Za-z0-9()\[\]]+', // Urdu words / punctuation
+  );
+
+  static const Map<String, String> _mirror = {
+    '(': ')',
+    ')': '(',
+    '[': ']',
+    ']': '[',
+  };
+
+  pw.Widget _vectorMixed(
+      String raw, {
+        required double size,
+        required PdfColor color,
+        required bool bold,
+      }) {
+    final style = pw.TextStyle(
+      font: bold ? vectorBold : vectorRegular,
+      fontSize: size,
+      color: color,
+    );
+    final logical = <pw.Widget>[];
+
+    for (final m in _tokenRe.allMatches(raw)) {
+      final tok = m[0]!;
+      if (tok.trim().isEmpty) {
+        logical.add(pw.SizedBox(width: size * 0.3));
+      } else if (_mirror.containsKey(tok)) {
+        logical.add(pw.Text(_mirror[tok]!, style: style));
+      } else if (RegExp(r'^[A-Za-z0-9]').hasMatch(tok)) {
+        logical.add(
+          pw.Text(tok, style: style, textDirection: pw.TextDirection.ltr),
+        );
+      } else {
+        logical.add(
+          pw.Text(
+            PdfGenerator.formatUrdu(tok),
+            style: style,
+            textDirection: pw.TextDirection.rtl,
+          ),
+        );
+      }
+    }
+    if (logical.isEmpty) return pw.SizedBox();
+
+    return pw.Row(
+      mainAxisSize: pw.MainAxisSize.min,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: logical.reversed.toList(),
+    );
+  }
+
+  /// Plain LTR text (numbers, phone) in the vector bold font.
+  pw.Widget number(String t, {required double size, required PdfColor color}) {
+    return pw.Text(
+      t,
+      style: pw.TextStyle(font: vectorBold, fontSize: size, color: color),
+    );
+  }
+}
+
+// =============================================================================
+// Page builder
+// =============================================================================
+
+class _RateListBuilder {
+  _RateListBuilder({
+    required this.products,
+    required this.engine,
+    required this.theme,
+  });
+
+  final List<ProductModel> products;
+  final _TextEngine engine;
+  final pw.ThemeData theme;
+
+  List<pw.Page> buildPages() {
+    // Group by company (keeps original order inside each company).
     final grouped = <String, List<ProductModel>>{};
     for (final p in products) {
       grouped.putIfAbsent(p.company, () => <ProductModel>[]).add(p);
     }
     final companies = grouped.keys.toList()..sort();
 
-    // ---- Split into columns, then pair columns into pages ------------------
     final columns = _splitIntoColumns(grouped, companies);
     final totalPages = columns.isEmpty ? 1 : (columns.length / 2).ceil();
     final dateText = _formatDate(DateTime.now());
 
+    final pages = <pw.Page>[];
     for (int page = 0; page < totalPages; page++) {
-      // Column 2n   -> RIGHT table (filled first)
-      // Column 2n+1 -> LEFT table  (filled second)
-      final rightEntries =
+      // Column 2n -> RIGHT table (filled first); 2n+1 -> LEFT (second).
+      final right =
       (page * 2) < columns.length ? columns[page * 2] : <PdfRowEntry>[];
-      final leftEntries = (page * 2 + 1) < columns.length
+      final left = (page * 2 + 1) < columns.length
           ? columns[page * 2 + 1]
           : <PdfRowEntry>[];
 
-      pdf.addPage(
+      // IMPORTANT: build the widget tree eagerly, NOT inside pw.Page.build.
+      // pw.Page.build only runs later, during pdf.save(), so the recording
+      // pass would never see any text and nothing would get rasterized.
+      final content = pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          _banner(),
+          pw.SizedBox(height: 3),
+          pw.Container(height: 2.5, color: _Palette.gold),
+          _infoStrip(page + 1, totalPages, dateText),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              _tableOrSpace(left), // LEFT (second)
+              pw.SizedBox(width: _colGap),
+              _tableOrSpace(right), // RIGHT (first)
+            ],
+          ),
+          pw.Spacer(),
+          _footer(products.length),
+        ],
+      );
+
+      pages.add(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.fromLTRB(
@@ -124,63 +428,22 @@ class PdfGenerator {
             _marginH,
             _marginBottom,
           ),
-          theme: pw.ThemeData.withFont(
-            base: urduFontRegular,
-            bold: urduFontBold,
-          ),
-          build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              children: [
-                _buildBanner(urduFontBold),
-                pw.SizedBox(height: 3),
-                pw.Container(height: 2.5, color: _Palette.gold),
-                _buildInfoStrip(
-                  font: urduFontBold,
-                  page: page + 1,
-                  totalPages: totalPages,
-                  dateText: dateText,
-                ),
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    // LEFT table (second)
-                    _buildTableOrSpace(
-                      leftEntries,
-                      urduFontBold,
-                      urduFontRegular,
-                    ),
-                    pw.SizedBox(width: _colGap),
-                    // RIGHT table (first)
-                    _buildTableOrSpace(
-                      rightEntries,
-                      urduFontBold,
-                      urduFontRegular,
-                    ),
-                  ],
-                ),
-                pw.Spacer(),
-                _buildFooter(urduFontRegular, products.length),
-              ],
-            );
-          },
+          theme: theme,
+          build: (pw.Context context) => content,
         ),
       );
     }
-
-    return pdf.save();
+    return pages;
   }
 
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
   // Pagination
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
 
-  /// Flows companies/items into columns of [_rowsPerColumn] rows.
   /// - A company banner is never left alone at the bottom of a column.
-  /// - If a company continues in the next column/page, its banner is repeated
-  ///   with "(جاری)" so every column is self-explanatory.
-  static List<List<PdfRowEntry>> _splitIntoColumns(
+  /// - If a company continues in the next column/page, the banner repeats
+  ///   with "(جاری)".
+  List<List<PdfRowEntry>> _splitIntoColumns(
       Map<String, List<ProductModel>> grouped,
       List<String> companies,
       ) {
@@ -193,7 +456,6 @@ class PdfGenerator {
       var continued = false;
 
       while (i < items.length) {
-        // Need room for the banner + at least one item.
         if (columns.isEmpty || _rowsPerColumn - columns.last.length < 2) {
           columns.add(<PdfRowEntry>[]);
         }
@@ -209,13 +471,13 @@ class PdfGenerator {
     return columns;
   }
 
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
   // Page furniture
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
 
-  static pw.Widget _buildBanner(pw.Font bold) {
+  pw.Widget _banner() {
     return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       decoration: pw.BoxDecoration(
         color: _Palette.navy,
         borderRadius: pw.BorderRadius.circular(6),
@@ -223,94 +485,63 @@ class PdfGenerator {
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
-          pw.Text(
-            formatUrdu(AppStrings.appTitle),
-            style: pw.TextStyle(
-              font: bold,
-              fontSize: 20,
-              color: PdfColors.white,
-            ),
-            textDirection: pw.TextDirection.rtl,
-            textAlign: pw.TextAlign.center,
+          engine.text(
+            AppStrings.appTitle,
+            size: 21,
+            color: PdfColors.white,
+            bold: true,
           ),
-          pw.Text(
-            formatUrdu(AppStrings.storeAddress),
-            style: pw.TextStyle(
-              font: bold,
-              fontSize: 10,
-              color: _Palette.gold,
-            ),
-            textDirection: pw.TextDirection.rtl,
-            textAlign: pw.TextAlign.center,
+          engine.text(
+            AppStrings.storeAddress,
+            size: 10.5,
+            color: _Palette.gold,
           ),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildInfoStrip({
-    required pw.Font font,
-    required int page,
-    required int totalPages,
-    required String dateText,
-  }) {
+  pw.Widget _infoStrip(int page, int totalPages, String dateText) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 6),
+      padding: const pw.EdgeInsets.symmetric(vertical: 5),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
           // Page badge (left)
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 1),
             decoration: pw.BoxDecoration(
               color: _Palette.badgeBg,
               border: pw.Border.all(color: _Palette.navy, width: 1),
               borderRadius: pw.BorderRadius.circular(12),
             ),
-            child: pw.Text(
-              '${formatUrdu('صفحہ')} $page ${formatUrdu('از')} $totalPages',
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 9.5,
-                color: _Palette.navy,
-              ),
-              textDirection: pw.TextDirection.rtl,
+            child: engine.text(
+              'صفحہ $page از $totalPages',
+              size: 10,
+              color: _Palette.navy,
+              bold: true,
             ),
           ),
 
           // Date (center)
-          pw.Text(
-            '${formatUrdu('تاریخ')}: $dateText',
-            style: pw.TextStyle(
-              font: font,
-              fontSize: 9.5,
-              color: _Palette.muted,
-            ),
-            textDirection: pw.TextDirection.rtl,
-          ),
+          engine.text('تاریخ: $dateText', size: 10, color: _Palette.muted),
 
           // Proprietor + phone (right)
           pw.Row(
             mainAxisSize: pw.MainAxisSize.min,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Text(
+              engine.number(
                 AppStrings.phoneNumber,
-                style: pw.TextStyle(
-                  font: font,
-                  fontSize: 10,
-                  color: _Palette.navy,
-                ),
+                size: 10,
+                color: _Palette.navy,
               ),
               pw.SizedBox(width: 8),
-              pw.Text(
-                formatUrdu(AppStrings.proprietorName),
-                style: pw.TextStyle(
-                  font: font,
-                  fontSize: 10.5,
-                  color: _Palette.text,
-                ),
-                textDirection: pw.TextDirection.rtl,
+              engine.text(
+                AppStrings.proprietorName,
+                size: 11,
+                color: _Palette.text,
               ),
             ],
           ),
@@ -319,34 +550,26 @@ class PdfGenerator {
     );
   }
 
-  static pw.Widget _buildFooter(pw.Font font, int totalItems) {
+  pw.Widget _footer(int totalItems) {
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         pw.Container(height: 0.8, color: _Palette.line),
-        pw.SizedBox(height: 3),
+        pw.SizedBox(height: 2),
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text(
-              '${formatUrdu('کل آئٹمز')}: $totalItems',
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 8.5,
-                color: _Palette.muted,
-              ),
-              textDirection: pw.TextDirection.rtl,
+            engine.text(
+              'کل آئٹمز: $totalItems',
+              size: 9,
+              color: _Palette.muted,
             ),
             // Edit or remove this note as you like.
-            pw.Text(
-              formatUrdu('ریٹ بغیر اطلاع تبدیل ہو سکتے ہیں'),
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 8.5,
-                color: _Palette.muted,
-              ),
-              textDirection: pw.TextDirection.rtl,
+            engine.text(
+              'ریٹ بغیر اطلاع تبدیل ہو سکتے ہیں',
+              size: 9,
+              color: _Palette.muted,
             ),
           ],
         ),
@@ -354,33 +577,25 @@ class PdfGenerator {
     );
   }
 
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
   // Table
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
 
-  static pw.Widget _buildTableOrSpace(
-      List<PdfRowEntry> entries,
-      pw.Font bold,
-      pw.Font regular,
-      ) {
+  pw.Widget _tableOrSpace(List<PdfRowEntry> entries) {
     if (entries.isEmpty) return pw.SizedBox(width: _tableWidth);
-    return _buildTable(entries, bold, regular);
+    return _table(entries);
   }
 
-  static pw.Widget _buildTable(
-      List<PdfRowEntry> entries,
-      pw.Font bold,
-      pw.Font regular,
-      ) {
-    final rows = <pw.Widget>[_buildHeaderRow(bold)];
+  pw.Widget _table(List<PdfRowEntry> entries) {
+    final rows = <pw.Widget>[_headerRow()];
     var shaded = false;
 
     for (final entry in entries) {
       if (entry is CompanyHeaderEntry) {
-        rows.add(_buildCompanyRow(entry, bold));
+        rows.add(_companyRow(entry));
         shaded = false; // restart zebra after each banner
       } else if (entry is ProductItemEntry) {
-        rows.add(_buildProductRow(entry, bold, regular, shaded: shaded));
+        rows.add(_productRow(entry, shaded: shaded));
         shaded = !shaded;
       }
     }
@@ -396,15 +611,17 @@ class PdfGenerator {
   }
 
   /// Visual order (left -> right): گاہک | تھوک | خرید | آئٹم | نمبر شمار
-  static pw.Widget _buildHeaderRow(pw.Font bold) {
+  pw.Widget _headerRow() {
     pw.Widget h(String label, double w, {bool divider = true}) => _cell(
-      formatUrdu(label),
       width: w,
       height: _headH,
-      font: bold,
-      size: 9,
-      color: PdfColors.white,
       divider: divider ? _Palette.navySoft : null,
+      child: engine.text(
+        label,
+        size: 9.5,
+        color: PdfColors.white,
+        bold: true,
+      ),
     );
 
     return pw.Container(
@@ -423,8 +640,8 @@ class PdfGenerator {
     );
   }
 
-  /// Full-width company band (no more squeezing the name into one cell).
-  static pw.Widget _buildCompanyRow(CompanyHeaderEntry entry, pw.Font bold) {
+  /// Full-width company band with a gold accent bar on the right edge.
+  pw.Widget _companyRow(CompanyHeaderEntry entry) {
     final label = entry.continued
         ? 'کمپنی: ${entry.companyName} (جاری)'
         : 'کمپنی: ${entry.companyName}';
@@ -440,39 +657,37 @@ class PdfGenerator {
       child: pw.Row(
         children: [
           _cell(
-            label, // raw: _mixedText reshapes Urdu tokens itself
             width: _tableWidth - 4,
             height: _rowH,
-            font: bold,
-            size: 9.5,
-            color: _Palette.navy,
-            mixed: true,
+            child: engine.text(
+              label,
+              size: 10,
+              color: _Palette.navy,
+              bold: true,
+            ),
           ),
-          // Gold accent bar on the right edge (RTL start)
           pw.Container(width: 4, height: _rowH, color: _Palette.gold),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildProductRow(
-      ProductItemEntry entry,
-      pw.Font bold,
-      pw.Font regular, {
-        required bool shaded,
-      }) {
+  pw.Widget _productRow(ProductItemEntry entry, {required bool shaded}) {
     final p = entry.product;
     const side = pw.BorderSide(color: _Palette.line, width: 0.6);
 
-    pw.Widget rate(String v, {PdfColor color = _Palette.text, bool first = false}) =>
+    pw.Widget rate(
+        num value, {
+          PdfColor color = _Palette.text,
+          bool first = false,
+        }) =>
         _cell(
-          v,
           width: _rateW,
           height: _rowH,
-          font: bold,
-          size: 9,
-          color: color,
           divider: first ? null : _Palette.line,
+          child: value > 0
+              ? engine.number(_money(value), size: 9, color: color)
+              : null,
         );
 
     return pw.Container(
@@ -484,47 +699,40 @@ class PdfGenerator {
       ),
       child: pw.Row(
         children: [
-          rate(_money(p.customerRate), color: _Palette.navy, first: true),
-          rate(_money(p.wholesaleRate)),
-          rate(_money(p.purchaseRate)),
+          rate(p.customerRate, color: _Palette.navy, first: true),
+          rate(p.wholesaleRate),
+          rate(p.purchaseRate),
           _cell(
-            p.name, // raw: _mixedText reshapes Urdu tokens itself
             width: _nameW,
             height: _rowH,
-            font: regular,
-            size: 9,
-            color: _Palette.text,
             alignment: pw.Alignment.centerRight,
             divider: _Palette.line,
-            mixed: true,
+            child: engine.text(p.name, size: 9.5, color: _Palette.text),
           ),
           _cell(
-            '${entry.itemNumber}',
             width: _noW,
             height: _rowH,
-            font: bold,
-            size: 8.5,
-            color: _Palette.muted,
             divider: _Palette.line,
+            child: engine.number(
+              '${entry.itemNumber}',
+              size: 8.5,
+              color: _Palette.muted,
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// One fixed-size cell. Text is wrapped in a scaleDown FittedBox, so a long
-  /// product name shrinks slightly instead of overflowing or wrapping.
-  static pw.Widget _cell(
-      String text, {
-        required double width,
-        required double height,
-        required pw.Font font,
-        required double size,
-        required PdfColor color,
-        pw.Alignment alignment = pw.Alignment.center,
-        PdfColor? divider,
-        bool mixed = false, // true => pass RAW text (no formatUrdu), see _mixedText
-      }) {
+  /// One fixed-size cell. The child is wrapped in a scaleDown FittedBox so a
+  /// long name shrinks slightly instead of overflowing.
+  pw.Widget _cell({
+    required double width,
+    required double height,
+    pw.Widget? child,
+    pw.Alignment alignment = pw.Alignment.center,
+    PdfColor? divider,
+  }) {
     return pw.Container(
       width: width,
       height: height,
@@ -537,101 +745,18 @@ class PdfGenerator {
           left: pw.BorderSide(color: divider, width: 0.5),
         ),
       ),
-      child: text.isEmpty
+      child: child == null
           ? null
-          : pw.FittedBox(
-        fit: pw.BoxFit.scaleDown,
-        child: mixed
-            ? _mixedText(text, font: font, size: size, color: color)
-            : pw.Text(
-          text,
-          style: pw.TextStyle(
-            font: font,
-            fontSize: size,
-            color: color,
-          ),
-          textDirection: pw.TextDirection.rtl,
-        ),
-      ),
+          : pw.FittedBox(fit: pw.BoxFit.scaleDown, child: child),
     );
   }
 
-  // ===========================================================================
-  // Mixed Urdu + English/digits + brackets (e.g. "پائپ 3انچ PPR (10فٹ)")
-  // ===========================================================================
-
-  // Tokens, in this priority:
-  //  1) Latin/digit chunk : PPR, 10, 500, 60x60, 1.5, 3/4
-  //  2) bracket           : ( ) [ ]
-  //  3) whitespace
-  //  4) anything else     : Urdu/Arabic words and punctuation
-  static final RegExp _tokenRe = RegExp(
-    r'[A-Za-z0-9]+(?:[.\-/×][A-Za-z0-9]+)*'
-    r'|[()\[\]]'
-    r'|\s+'
-    r'|[^\sA-Za-z0-9()\[\]]+',
-  );
-
-  static const Map<String, String> _mirror = {
-    '(': ')',
-    ')': '(',
-    '[': ']',
-    ']': '[',
-  };
-
-  /// Lays out a mixed-direction string ourselves instead of trusting the pdf
-  /// package's bidi pass (which scrambles brackets / Latin words inside
-  /// Urdu). Each token is drawn as its own single-direction Text, and the
-  /// tokens are placed right-to-left. Brackets are mirrored manually, so
-  /// "(10فٹ)" stays one properly enclosed group like in the app.
-  static pw.Widget _mixedText(
-      String raw, {
-        required pw.Font font,
-        required double size,
-        required PdfColor color,
-      }) {
-    final style = pw.TextStyle(font: font, fontSize: size, color: color);
-    final logical = <pw.Widget>[];
-
-    for (final m in _tokenRe.allMatches(raw.trim())) {
-      final tok = m[0]!;
-
-      if (tok.trim().isEmpty) {
-        logical.add(pw.SizedBox(width: size * 0.3)); // word gap
-      } else if (_mirror.containsKey(tok)) {
-        logical.add(pw.Text(_mirror[tok]!, style: style));
-      } else if (RegExp(r'^[A-Za-z0-9]').hasMatch(tok)) {
-        logical.add(
-          pw.Text(tok, style: style, textDirection: pw.TextDirection.ltr),
-        );
-      } else {
-        logical.add(
-          pw.Text(
-            formatUrdu(tok),
-            style: style,
-            textDirection: pw.TextDirection.rtl,
-          ),
-        );
-      }
-    }
-
-    if (logical.isEmpty) return pw.SizedBox();
-
-    // Logical order is right-to-left, a Row draws left-to-right -> reverse.
-    return pw.Row(
-      mainAxisSize: pw.MainAxisSize.min,
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
-      children: logical.reversed.toList(),
-    );
-  }
-
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
   // Helpers
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
 
-  /// 22500 -> "22,500". Zero / negative -> empty cell.
+  /// 22500 -> "22,500"
   static String _money(num v) {
-    if (v <= 0) return '';
     return v.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (_) => ',',
