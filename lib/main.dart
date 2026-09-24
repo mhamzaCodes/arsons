@@ -10,6 +10,9 @@ void main() async {
   // Initialize GetStorage persistence
   await GetStorage.init();
 
+  // Initialize AuthController globally
+  Get.put(AuthController(), permanent: true);
+
   runApp(const MyApp());
 }
 
@@ -18,6 +21,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AuthController authController = AuthController.to;
+
     return GetMaterialApp(
       title: 'AR Sons',
       debugShowCheckedModeBanner: false,
@@ -65,8 +70,10 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // Entry Home View
-      home: const HomeView(),
+      // Entry View - Navigates based on persistent login state
+      home: Obx(() => authController.isLoggedIn.value
+          ? const HomeView()
+          : const LoginView()),
     );
   }
 }

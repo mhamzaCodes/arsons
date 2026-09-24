@@ -13,6 +13,7 @@ import '../utils/responsive.dart';
 import 'add_edit_product_view.dart';
 import 'company_list_view.dart';
 import 'pdf_preview_view.dart';
+import 'settings_view.dart';
 
 /// Main Dashboard View with Dynamic Categories, Scaled Text & Data Backup/Restore
 class HomeView extends StatefulWidget {
@@ -197,11 +198,13 @@ class _HomeViewState extends State<HomeView>
                   ),
                   if (!isMobile) ...[
                     phoneChip,
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     _buildBackupButton(context),
                   ],
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   _buildPdfButton(),
+                  const SizedBox(width: 6),
+                  _buildSettingsButton(context),
                 ],
               ),
               const SizedBox(height: 14),
@@ -278,6 +281,28 @@ class _HomeViewState extends State<HomeView>
             padding: EdgeInsets.all(11),
             child: Icon(
               Icons.picture_as_pdf_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton(BuildContext context) {
+    return Tooltip(
+      message: AppStrings.settingsTitle,
+      child: Material(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Get.to(() => const SettingsView()),
+          child: const Padding(
+            padding: EdgeInsets.all(11),
+            child: Icon(
+              Icons.settings_rounded,
               color: Colors.white,
               size: 26,
             ),
@@ -1168,10 +1193,10 @@ class _HomeViewState extends State<HomeView>
                 ),
                 const SizedBox(height: 14),
 
-                const Divider(),
+                /*const Divider(),
                 const SizedBox(height: 8),
 
-                /*// Action 3: Paste Backup Code Input
+                // Action 3: Paste Backup Code Input
                 Text(
                   'یا کلپ بورڈ سے بیک اپ ٹیکسٹ پیسٹ کر کے ریسٹور کریں:',
                   style: TextStyle(
@@ -1191,7 +1216,7 @@ class _HomeViewState extends State<HomeView>
                     ),
                     contentPadding: const EdgeInsets.all(10),
                   ),
-                ),*/
+                ),
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
@@ -1235,7 +1260,7 @@ class _HomeViewState extends State<HomeView>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                ),*/
               ],
             ),
           ),
