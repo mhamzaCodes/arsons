@@ -7,7 +7,7 @@ import '../controllers/inventory_controller.dart';
 import '../models/product_model.dart';
 import '../utils/responsive.dart';
 
-/// Form View to Add or Edit Inventory Items with Category, Company & Unit Dropdowns
+/// Form View to Add or Edit Inventory Items with Persistent Companies & Category/Company/Unit Dropdowns
 class AddEditProductView extends StatefulWidget {
   final ProductModel? productToEdit;
   final String? initialCategory;
@@ -86,7 +86,9 @@ class _AddEditProductViewState extends State<AddEditProductView> {
       } else if (categoryCompanies.isNotEmpty) {
         _selectedCompany = categoryCompanies.first;
       } else {
-        _selectedCompany = 'ماسٹر';
+        _selectedCompany = _controller.allCompanies.isNotEmpty
+            ? _controller.allCompanies.first
+            : 'ماسٹر';
       }
     }
 
@@ -445,14 +447,9 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                         _controller.getCompaniesForCategory(_selectedCategory);
 
                     if (categoryCompanies.isNotEmpty) {
-                      if (!categoryCompanies.contains(_selectedCompany)) {
-                        _selectedCompany = categoryCompanies.first;
-                        _companyController.text = _selectedCompany;
-                        _isCustomCompany = false;
-                      }
-                    } else {
-                      _isCustomCompany = true;
-                      _companyController.clear();
+                      _selectedCompany = categoryCompanies.first;
+                      _companyController.text = _selectedCompany;
+                      _isCustomCompany = false;
                     }
                   });
                 }
@@ -479,7 +476,16 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                       ),
                     ),
                     onChanged: (val) {
-                      _selectedCategory = val.trim();
+                      setState(() {
+                        _selectedCategory = val.trim();
+                        final categoryCompanies =
+                            _controller.getCompaniesForCategory(_selectedCategory);
+
+                        if (categoryCompanies.isNotEmpty) {
+                          _selectedCompany = categoryCompanies.first;
+                          _companyController.text = _selectedCompany;
+                        }
+                      });
                     },
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
@@ -513,7 +519,11 @@ class _AddEditProductViewState extends State<AddEditProductView> {
     final categoryCompanies =
         _controller.getCompaniesForCategory(_selectedCategory);
 
-    final List<String> dropdownOptions = List.from(categoryCompanies);
+    // If category companies list is available, use it; otherwise fallback to all companies
+    final List<String> dropdownOptions = categoryCompanies.isNotEmpty
+        ? List.from(categoryCompanies)
+        : List.from(_controller.allCompanies);
+
     if (_selectedCompany.isNotEmpty &&
         !dropdownOptions.contains(_selectedCompany)) {
       dropdownOptions.add(_selectedCompany);
@@ -607,14 +617,14 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                     },
                   ),
                 ),
-                if (categoryCompanies.isNotEmpty)
+                if (dropdownOptions.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.list, color: AppColors.primaryTeal),
                     tooltip: 'فہرست سے منتخب کریں',
                     onPressed: () {
                       setState(() {
                         _isCustomCompany = false;
-                        _selectedCompany = categoryCompanies.first;
+                        _selectedCompany = dropdownOptions.first;
                         _companyController.text = _selectedCompany;
                       });
                     },

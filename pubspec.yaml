@@ -20,6 +20,7 @@ dependencies:
   intl: ^0.20.2
   google_fonts: ^6.2.1
   arabic_reshaper: ^0.0.1
+  file_picker: ^8.1.7
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:file_picker/file_picker.dart';
 import '../constants/colors.dart';
 import '../constants/constants.dart';
 import '../constants/strings.dart';
@@ -12,9 +14,7 @@ import 'add_edit_product_view.dart';
 import 'company_list_view.dart';
 import 'pdf_preview_view.dart';
 
-/// Main dashboard: branded header + search, quick stats, category pills,
-/// company filters and a responsive product grid (desktop/tablet) / list
-/// (mobile).
+/// Main Dashboard View with Dynamic Categories, Scaled Text & Data Backup/Restore
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -23,23 +23,47 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final InventoryController controller = Get.put(InventoryController());
   late TabController _tabController;
+  bool _tabControllerInitialized = false;
   final TextEditingController _searchController = TextEditingController();
   final NumberFormat _money = NumberFormat('#,##0', 'en_US');
 
   @override
   void initState() {
     super.initState();
+    _initTabController();
+
+    // Listen for dynamic category list updates
+    ever(controller.categories, (_) {
+      if (mounted) {
+        setState(() {
+          _initTabController();
+        });
+      }
+    });
+  }
+
+  void _initTabController() {
+    final catList = controller.categories;
+    final int catLength =
+        catList.isNotEmpty ? catList.length : AppConstants.defaultCategories.length;
+
+    if (_tabControllerInitialized) {
+      _tabController.dispose();
+    }
+
     _tabController = TabController(
-      length: AppConstants.defaultCategories.length,
+      length: catLength,
       vsync: this,
     );
+    _tabControllerInitialized = true;
 
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        final category = AppConstants.defaultCategories[_tabController.index];
+      if (!_tabController.indexIsChanging &&
+          _tabController.index < controller.categories.length) {
+        final category = controller.categories[_tabController.index];
         controller.selectCategory(category);
       }
     });
@@ -52,10 +76,6 @@ class _HomeViewState extends State<HomeView>
     super.dispose();
   }
 
-  // ===========================================================================
-  // Build
-  // ===========================================================================
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile = Responsive.isMobile(context);
@@ -66,31 +86,24 @@ class _HomeViewState extends State<HomeView>
         value: SystemUiOverlayStyle.light,
         child: Scaffold(
           backgroundColor: AppColors.background,
-
-          body: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _buildHeader(context, isMobile),
-                _buildStatsHeader(context),
-                _buildCategoryTabs(context),
-                _buildCompanyFilterChips(context),
-                const SizedBox(height: 4),
-
-                Expanded(
-                  child: _buildProductsArea(context, isMobile),
-                ),
-              ],
-            ),
+          body: Column(
+            children: [
+              _buildHeader(context, isMobile),
+              _buildStatsHeader(context),
+              _buildCategoryTabs(context),
+              _buildCompanyFilterChips(context),
+              const SizedBox(height: 4),
+              Expanded(child: _buildProductsArea(context, isMobile)),
+            ],
           ),
           bottomNavigationBar: _buildBottomBar(context),
-        )
+        ),
       ),
     );
   }
 
   // ===========================================================================
-  // Header (brand + phone + PDF + search)
+  // Header (brand + phone + PDF + Backup & Search)
   // ===========================================================================
 
   Widget _buildHeader(BuildContext context, bool isMobile) {
@@ -137,59 +150,64 @@ class _HomeViewState extends State<HomeView>
           ),
         ],
       ),
-      child: ResponsiveCenteredBody(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                _buildLogo(),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        AppStrings.appTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize:
-                          Responsive.fontSize(context, 18, desktopSize: 23),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize:
-                          Responsive.fontSize(context, 12, desktopSize: 15),
-                        ),
-                      ),
-                      if (isMobile) ...[
-                        const SizedBox(height: 6),
-                        phoneChip,
-                      ],
-                    ],
-                  ),
-                ),
-                if (!isMobile) ...[
-                  phoneChip,
+      child: SafeArea(
+        bottom: false,
+        child: ResponsiveCenteredBody(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _buildLogo(),
                   const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppStrings.appTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize:
+                                Responsive.fontSize(context, 18, desktopSize: 23),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${AppStrings.ceoLabel} ${AppStrings.ceoName} | ${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize:
+                                Responsive.fontSize(context, 12, desktopSize: 15),
+                          ),
+                        ),
+                        if (isMobile) ...[
+                          const SizedBox(height: 6),
+                          phoneChip,
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (!isMobile) ...[
+                    phoneChip,
+                    const SizedBox(width: 12),
+                    _buildBackupButton(context),
+                  ],
+                  const SizedBox(width: 8),
+                  _buildPdfButton(),
                 ],
-                _buildPdfButton(),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _buildSearchField(context),
-          ],
+              ),
+              const SizedBox(height: 14),
+              _buildSearchField(context),
+            ],
+          ),
         ),
       ),
     );
@@ -225,11 +243,33 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  Widget _buildBackupButton(BuildContext context) {
+    return Tooltip(
+      message: 'ڈیٹا بیک اپ اور ریسٹور (Backup & Restore)',
+      child: Material(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _showBackupRestoreDialog(context),
+          child: const Padding(
+            padding: EdgeInsets.all(11),
+            child: Icon(
+              Icons.cloud_sync_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPdfButton() {
     return Tooltip(
       message: AppStrings.quickPdfDownload,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -267,7 +307,7 @@ class _HomeViewState extends State<HomeView>
         ),
         onChanged: (val) {
           controller.updateSearchQuery(val);
-          setState(() {}); // refresh the clear button
+          setState(() {}); // refresh clear button
         },
         decoration: InputDecoration(
           hintText: AppStrings.searchHint,
@@ -281,13 +321,13 @@ class _HomeViewState extends State<HomeView>
           ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.close_rounded, size: 20),
-            onPressed: () {
-              _searchController.clear();
-              controller.updateSearchQuery('');
-              setState(() {});
-            },
-          )
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    controller.updateSearchQuery('');
+                    setState(() {});
+                  },
+                )
               : null,
           fillColor: Colors.white,
           filled: true,
@@ -343,12 +383,12 @@ class _HomeViewState extends State<HomeView>
   }
 
   Widget _statTile(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required int value,
-        required Color color,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required int value,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -368,7 +408,7 @@ class _HomeViewState extends State<HomeView>
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: color),
@@ -405,7 +445,7 @@ class _HomeViewState extends State<HomeView>
   }
 
   // ===========================================================================
-  // Category tabs (pill style) + company chips
+  // Category tabs (Dynamic Rx List) + company chips
   // ===========================================================================
 
   Widget _buildCategoryTabs(BuildContext context) {
@@ -413,40 +453,44 @@ class _HomeViewState extends State<HomeView>
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Material(
         color: Colors.transparent,
-        child: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          dividerColor: Colors.transparent,
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicatorPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
-          indicator: BoxDecoration(
-            color: AppColors.primaryTeal,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryTeal.withValues(alpha: 0.35),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          splashBorderRadius: BorderRadius.circular(22),
-          labelColor: Colors.white,
-          unselectedLabelColor: AppColors.textSecondary,
-          labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-          ),
-          tabs: AppConstants.defaultCategories
-              .map((cat) => Tab(height: 42, text: cat))
-              .toList(),
-        ),
+        child: Obx(() {
+          final catList = controller.categories;
+
+          return TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+            indicator: BoxDecoration(
+              color: AppColors.primaryTeal,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryTeal.withOpacity(0.35),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            splashBorderRadius: BorderRadius.circular(22),
+            labelColor: Colors.white,
+            unselectedLabelColor: AppColors.textSecondary,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+            labelStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+            ),
+            unselectedLabelStyle: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+            ),
+            tabs: catList
+                .map((cat) => Tab(height: 42, text: cat))
+                .toList(),
+          );
+        }),
       ),
     );
   }
@@ -472,7 +516,7 @@ class _HomeViewState extends State<HomeView>
                 onTap: controller.clearCompanyFilter,
               ),
               ...companies.map(
-                    (comp) => Padding(
+                (comp) => Padding(
                   padding: const EdgeInsetsDirectional.only(start: 8),
                   child: _companyChip(
                     context,
@@ -491,12 +535,12 @@ class _HomeViewState extends State<HomeView>
   }
 
   Widget _companyChip(
-      BuildContext context, {
-        required String label,
-        required bool selected,
-        required Color selectedColor,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required Color selectedColor,
+    required VoidCallback onTap,
+  }) {
     return ChoiceChip(
       label: Text(
         label,
@@ -545,7 +589,6 @@ class _HomeViewState extends State<HomeView>
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 400,
-            // Nastaleeq needs generous vertical room; raise if text clips.
             mainAxisExtent: 220,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
@@ -569,7 +612,7 @@ class _HomeViewState extends State<HomeView>
             Container(
               padding: const EdgeInsets.all(26),
               decoration: BoxDecoration(
-                color: AppColors.primaryTeal.withValues(alpha: 0.08),
+                color: AppColors.primaryTeal.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -601,7 +644,7 @@ class _HomeViewState extends State<HomeView>
                 backgroundColor: AppColors.primaryTeal,
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -649,7 +692,7 @@ class _HomeViewState extends State<HomeView>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize:
-                            Responsive.fontSize(context, 16, desktopSize: 19),
+                                Responsive.fontSize(context, 16, desktopSize: 19),
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark,
                           ),
@@ -664,7 +707,7 @@ class _HomeViewState extends State<HomeView>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryTeal.withValues(alpha: 0.12),
+                            color: AppColors.primaryTeal.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -685,6 +728,7 @@ class _HomeViewState extends State<HomeView>
                       ),
                     ],
                   ),
+                  SizedBox(height: 10.0,),
 
                   // Category + actions
                   Row(
@@ -702,7 +746,7 @@ class _HomeViewState extends State<HomeView>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize:
-                            Responsive.fontSize(context, 12, desktopSize: 15),
+                                Responsive.fontSize(context, 12, desktopSize: 15),
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -723,7 +767,7 @@ class _HomeViewState extends State<HomeView>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
                   // Rates (customer rate highlighted)
                   Row(
@@ -764,7 +808,7 @@ class _HomeViewState extends State<HomeView>
               ),
             ),
 
-            // Accent bar on the start (right) edge
+            // Accent bar on start (right) edge
             const PositionedDirectional(
               top: 0,
               bottom: 0,
@@ -787,7 +831,7 @@ class _HomeViewState extends State<HomeView>
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: color.withValues(alpha: 0.10),
+        color: color.withOpacity(0.10),
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -802,30 +846,30 @@ class _HomeViewState extends State<HomeView>
   }
 
   Widget _buildRateTile(
-      BuildContext context, {
-        required String title,
-        required double amount,
-        required String unit,
-        required Color color,
-        bool filled = false,
-      }) {
+    BuildContext context, {
+    required String title,
+    required double amount,
+    required String unit,
+    required Color color,
+    bool filled = false,
+  }) {
     final Color titleColor = filled ? Colors.white : color;
     final Color subColor = filled ? Colors.white70 : AppColors.textSecondary;
 
     Widget fit(Widget child) => FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: AlignmentDirectional.centerStart,
-      child: child,
-    );
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: child,
+        );
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: filled ? color : color.withValues(alpha: 0.08),
+        color: filled ? color : color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: filled ? color : color.withValues(alpha: 0.25),
+          color: filled ? color : color.withOpacity(0.25),
         ),
       ),
       child: Column(
@@ -876,7 +920,7 @@ class _HomeViewState extends State<HomeView>
 
   void _openAddProduct() {
     Get.to(
-          () => AddEditProductView(
+      () => AddEditProductView(
         initialCategory: controller.selectedCategory.value,
         initialCompany: controller.selectedCompany.value,
       ),
@@ -886,8 +930,9 @@ class _HomeViewState extends State<HomeView>
   Widget _buildBottomBar(BuildContext context) {
     return BottomAppBar(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.circular(20.0),
           boxShadow: [
             BoxShadow(
               color: Color(0x1A000000),
@@ -899,9 +944,8 @@ class _HomeViewState extends State<HomeView>
         child: SafeArea(
           top: false,
           child: ResponsiveCenteredBody(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
@@ -918,7 +962,7 @@ class _HomeViewState extends State<HomeView>
                       backgroundColor: AppColors.primaryTeal,
                       foregroundColor: Colors.white,
                       elevation: 2,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -929,7 +973,7 @@ class _HomeViewState extends State<HomeView>
                 OutlinedButton.icon(
                   onPressed: () {
                     Get.to(
-                          () => CompanyListView(
+                      () => CompanyListView(
                         categoryName: controller.selectedCategory.value,
                       ),
                     );
@@ -949,7 +993,7 @@ class _HomeViewState extends State<HomeView>
                       width: 1.5,
                     ),
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -958,6 +1002,255 @@ class _HomeViewState extends State<HomeView>
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // Backup & Restore Dialog
+  // ===========================================================================
+
+  void _showBackupRestoreDialog(BuildContext context) {
+    final TextEditingController pasteController = TextEditingController();
+
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          icon: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primaryTeal.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.cloud_sync_rounded,
+              size: 36,
+              color: AppColors.primaryTeal,
+            ),
+          ),
+          title: Text(
+            'ڈیٹا بیک اپ اور ریسٹور (Backup & Restore)',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Responsive.fontSize(context, 18, desktopSize: 22),
+              color: AppColors.primaryTealDark,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'اپنے تمام ڈیٹا کی بیک اپ فائل محفوظ کریں یا دوسرے ڈیوائس سے بیک اپ فائل ریسٹور کریں۔',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Action 1: Export / Save Backup File
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final jsonString = controller.generateBackupJson();
+                    // Copy JSON text to clipboard
+                    await Clipboard.setData(ClipboardData(text: jsonString));
+
+                    // Save file via FilePicker
+                    try {
+                      final String? outputFile = await FilePicker.platform.saveFile(
+                        dialogTitle: 'بیک اپ فائل محفوظ کریں',
+                        fileName:
+                            'ar_sons_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+                        type: FileType.custom,
+                        allowedExtensions: ['json'],
+                      );
+
+                      if (outputFile != null) {
+                        final file = File(outputFile);
+                        await file.writeAsString(jsonString);
+                      }
+                    } catch (_) {}
+
+                    Get.back();
+                    Get.snackbar(
+                      'بیک اپ کامیاب',
+                      'ڈیٹا بیک اپ کلپ بورڈ اور فائل میں محفوظ کر دیا گیا ہے!',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primaryTeal,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(12),
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded),
+                  label: Text(
+                    'ڈیٹا بیک اپ بنائیں (Export File)',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryTeal,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Action 2: Import / Pick Backup File
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    try {
+                      final FilePickerResult? result =
+                          await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['json'],
+                      );
+
+                      if (result != null && result.files.single.path != null) {
+                        final file = File(result.files.single.path!);
+                        final content = await file.readAsString();
+                        final success = controller.restoreFromBackupJson(content);
+
+                        Get.back();
+                        if (success) {
+                          Get.snackbar(
+                            'ریسٹور کامیاب',
+                            'تمام ڈیٹا کامیابی سے ریسٹور ہو گیا ہے!',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppColors.successGreen,
+                            colorText: Colors.white,
+                            margin: const EdgeInsets.all(12),
+                          );
+                        } else {
+                          Get.snackbar(
+                            'خرابی',
+                            'بیک اپ فائل پڑھنے میں ناکامی!',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppColors.deleteRed,
+                            colorText: Colors.white,
+                            margin: const EdgeInsets.all(12),
+                          );
+                        }
+                        return;
+                      }
+                    } catch (_) {}
+                  },
+                  icon: const Icon(Icons.upload_file_rounded),
+                  label: Text(
+                    'بیک اپ فائل منتخب کریں (Import File)',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryTeal,
+                    side: const BorderSide(color: AppColors.primaryTeal, width: 1.5),
+                    minimumSize: const Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Divider(),
+                const SizedBox(height: 8),
+
+                /*// Action 3: Paste Backup Code Input
+                Text(
+                  'یا کلپ بورڈ سے بیک اپ ٹیکسٹ پیسٹ کر کے ریسٹور کریں:',
+                  style: TextStyle(
+                    fontSize: Responsive.fontSize(context, 12, desktopSize: 15),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: pasteController,
+                  maxLines: 3,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: InputDecoration(
+                    hintText: 'بیک اپ کا JSON کوڈ یہاں پیسٹ کریں...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.all(10),
+                  ),
+                ),*/
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    final text = pasteController.text.trim();
+                    if (text.isNotEmpty) {
+                      final success = controller.restoreFromBackupJson(text);
+                      Get.back();
+                      if (success) {
+                        Get.snackbar(
+                          'ریسٹور کامیاب',
+                          'ڈیٹا کلپ بورڈ ٹیکسٹ سے کامیابی سے ریسٹور ہو گیا!',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.successGreen,
+                          colorText: Colors.white,
+                          margin: const EdgeInsets.all(12),
+                        );
+                      } else {
+                        Get.snackbar(
+                          'خرابی',
+                          'غیر موزوں بیک اپ کوڈ!',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.deleteRed,
+                          colorText: Colors.white,
+                          margin: const EdgeInsets.all(12),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondaryTeal,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'ٹیکسٹ سے ریسٹور کریں (Restore from Text)',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                AppStrings.close,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -980,7 +1273,7 @@ class _HomeViewState extends State<HomeView>
           icon: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.deleteRed.withValues(alpha: 0.10),
+              color: AppColors.deleteRed.withOpacity(0.10),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1013,7 +1306,7 @@ class _HomeViewState extends State<HomeView>
               Container(
                 width: double.infinity,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
@@ -1061,7 +1354,7 @@ class _HomeViewState extends State<HomeView>
                 backgroundColor: AppColors.deleteRed,
                 foregroundColor: Colors.white,
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

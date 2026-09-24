@@ -1,12 +1,14 @@
 /// App-wide static text strings in Urdu with English references
 class AppStrings {
   // Store Header Details
-  static const String appTitle = 'الحرم ٹائل اینڈ سینٹری سٹور';
+  static const String appTitle = 'اصغر ہارڈ ویئر اینڈ سینٹری سٹور';
   static const String appSubtitle = 'انوینٹری اینڈ ریٹ لسٹ سسٹم';
+  static const String ceoLabel = 'سی ای او:';
+  static const String ceoName = 'اللہ رحم';
   static const String proprietorLabel = 'پروپرائیٹر:';
-  static const String proprietorName = 'حاجی محمد حماد';
+  static const String proprietorName = 'محمد حماد';
   static const String phoneLabel = 'فون نمبر:';
-  static const String phoneNumber = '0300-1234567';
+  static const String phoneNumber = '03001727174';
   static const String storeAddress = 'نارنگ منڈی';
 
   // Navigation & Screen Titles
@@ -81,4 +83,35 @@ class AppStrings {
   static const String itemUpdatedSuccess = 'آئٹم کاملاِ کامیابی سے اپ ڈیٹ ہو گیا!';
   static const String itemDeletedSuccess = 'آئٹم کامیابی سے حذف ہو گیا!';
   static const String fillAllFields = 'براہ کرم تمام لازمی خانے پر کریں!';
+
+  // Authentication & Profile Strings
+  static const String loginTitle = 'لاگ ان کریں';
+  static const String registerTitle = 'نیا اکاؤنٹ بنائیں (رجسٹریشن)';
+  static const String settingsTitle = 'سیٹنگز / پروائل';
+  static const String fullNameLabel = 'مکمل نام';
+  static const String fullNameHint = 'مثلاً: محمد حماد';
+  static const String phoneInputLabel = 'فون نمبر';
+  static const String phoneInputHint = '03001234567';
+  static const String passwordLabel = 'پاس ورڈ';
+  static const String passwordHint = '******';
+  static const String newPasswordLabel = 'نیا پاس ورڈ (اختیاری)';
+  static const String newPasswordHint = 'نیا پاس ورڈ درج کریں...';
+  static const String confirmPasswordLabel = 'پاس ورڈ کی تصدیق کریں';
+  static const String confirmPasswordHint = 'پاس ورڈ دوبارہ درج کریں...';
+  static const String loginButton = 'لاگ ان کریں';
+  static const String registerButton = 'رجسٹر کریں';
+  static const String updateProfileButton = 'پروفائل اپ ڈیٹ کریں';
+  static const String logoutButton = 'لاگ آؤٹ کریں';
+  static const String noAccountPrompt = 'اکاؤنٹ نہیں ہے؟ نیا اکاؤنٹ بنائیں';
+  static const String hasAccountPrompt = 'پہلے سے اکاؤنٹ موجود ہے؟ لاگ ان کریں';
+  static const String logoutConfirmTitle = 'لاگ آؤٹ کی تائید';
+  static const String logoutConfirmMessage = 'کیا آپ واقعی لاگ آؤٹ کرنا چاہتے ہیں؟';
+  static const String invalidCredentials = 'فون نمبر یا پاس ورڈ غلط ہے!';
+  static const String userAlreadyExists = 'یہ فون نمبر پہلے سے رجسٹرڈ ہے!';
+  static const String passwordMismatch = 'پاس ورڈز آپس میں نہیں ملتے!';
+  static const String loginSuccess = 'کامیابی سے لاگ ان ہو گئے!';
+  static const String registerSuccess = 'اکاؤنٹ کامیابی سے بن گیا!';
+  static const String profileUpdatedSuccess = 'پروفائل کامیابی سے اپ ڈیٹ ہو گیا!';
+  static const String currentPasswordRequired = 'پاس ورڈ تبدیل کرنے کے لیے موجودہ پاس ورڈ درج کریں!';
+  static const String incorrectCurrentPassword = 'موجودہ پاس ورڈ غلط ہے!';
 }
