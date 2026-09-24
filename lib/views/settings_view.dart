@@ -180,10 +180,10 @@ class _SettingsViewState extends State<SettingsView> {
                     _buildProfileHeaderCard(context),
                     const SizedBox(height: 20),
                     _buildEditProfileCard(context),
-                    const SizedBox(height: 20),
-                    _buildStoreDetailsCard(context),
-                    const SizedBox(height: 24),
-                    _buildLogoutButton(context),
+                    // const SizedBox(height: 20),
+                    // _buildStoreDetailsCard(context),
+                    // const SizedBox(height: 24),
+                    // _buildLogoutButton(context),
                   ],
                 ),
               ),
@@ -261,6 +261,17 @@ class _SettingsViewState extends State<SettingsView> {
                 ],
               ),
             ),
+            Container(
+              padding: EdgeInsets.all(6.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white
+              ),
+              child: IconButton(
+                onPressed: () => _showLogoutConfirmation(context),
+                icon: Icon(Icons.logout_rounded, size: 24, color: Colors.red,),
+              ),
+            )
           ],
         ),
       );

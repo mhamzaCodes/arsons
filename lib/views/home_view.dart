@@ -39,8 +39,12 @@ class _HomeViewState extends State<HomeView>
     // Listen for dynamic category list updates
     ever(controller.categories, (_) {
       if (mounted) {
-        setState(() {
-          _initTabController();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _initTabController();
+            });
+          }
         });
       }
     });
@@ -48,8 +52,11 @@ class _HomeViewState extends State<HomeView>
 
   void _initTabController() {
     final catList = controller.categories;
-    final int catLength =
-        catList.isNotEmpty ? catList.length : AppConstants.defaultCategories.length;
+    final int catLength = catList.isNotEmpty
+        ? catList.length
+        : (AppConstants.defaultCategories.isNotEmpty
+            ? AppConstants.defaultCategories.length
+            : 1);
 
     if (_tabControllerInitialized) {
       _tabController.dispose();
@@ -179,15 +186,41 @@ class _HomeViewState extends State<HomeView>
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          '${AppStrings.ceoLabel} ${AppStrings.ceoName} | ${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize:
+                        Row(
+                          children: [
+                            Text(
+                              '${AppStrings.ceoLabel} ${AppStrings.ceoName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize:
+                                    Responsive.fontSize(context, 12, desktopSize: 15),
+                              ),
+                            ),
+                            SizedBox(width: 6.0,),
+                            Text(
+                              '|',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize:
                                 Responsive.fontSize(context, 12, desktopSize: 15),
-                          ),
+                              ),
+                            ),
+                            SizedBox(width: 6.0,),
+                            Text(
+                              '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize:
+                                Responsive.fontSize(context, 12, desktopSize: 15),
+                              ),
+                            ),
+                          ],
                         ),
                         if (isMobile) ...[
                           const SizedBox(height: 6),
@@ -199,7 +232,7 @@ class _HomeViewState extends State<HomeView>
                   if (!isMobile) ...[
                     phoneChip,
                     const SizedBox(width: 10),
-                    _buildBackupButton(context),
+                    // _buildBackupButton(context),
                   ],
                   const SizedBox(width: 6),
                   _buildPdfButton(),
@@ -480,6 +513,7 @@ class _HomeViewState extends State<HomeView>
         color: Colors.transparent,
         child: Obx(() {
           final catList = controller.categories;
+          if (catList.isEmpty) return const SizedBox.shrink();
 
           return TabBar(
             controller: _tabController,

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:arsons/constants/constants.dart';
 import 'package:arsons/models/product_model.dart';
 import 'package:arsons/controllers/inventory_controller.dart';
 
@@ -27,14 +26,26 @@ void main() {
       expect(fromMapProduct.customerRate, 6000.0);
     });
 
-    test('InventoryController default seed data verification', () {
+    test('InventoryController adding and retrieving products verification', () {
       final controller = InventoryController();
-      controller.products.value = List.from(AppConstants.seedProducts);
+      final sampleProduct = ProductModel(
+        id: 'test_1',
+        name: 'پائپ 3 انچ PPR',
+        category: 'پائپ اور فٹنگ',
+        company: 'ماسٹر',
+        purchaseRate: 1000.0,
+        wholesaleRate: 1200.0,
+        customerRate: 1500.0,
+        unit: 'فٹ',
+      );
 
-      expect(controller.products.length, AppConstants.seedProducts.length);
+      controller.addProduct(sampleProduct);
+
+      expect(controller.products.length, 1);
 
       final pipeProducts = controller.getProductsForCategory('پائپ اور فٹنگ');
-      expect(pipeProducts.length, greaterThan(0));
+      expect(pipeProducts.length, 1);
+      expect(pipeProducts.first.name, 'پائپ 3 انچ PPR');
     });
   });
 }

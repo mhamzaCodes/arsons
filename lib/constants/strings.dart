@@ -3,7 +3,7 @@ class AppStrings {
   // Store Header Details
   static const String appTitle = 'اصغر ہارڈ ویئر اینڈ سینٹری سٹور';
   static const String appSubtitle = 'انوینٹری اینڈ ریٹ لسٹ سسٹم';
-  static const String ceoLabel = 'سی ای او:';
+  static const String ceoLabel = 'چیف ایگزیکٹو:';
   static const String ceoName = 'اللہ رحم';
   static const String proprietorLabel = 'پروپرائیٹر:';
   static const String proprietorName = 'محمد حماد';

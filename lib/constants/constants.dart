@@ -7,14 +7,16 @@ class AppConstants {
   // Storage Keys
   static const String storageKeyProducts = 'al_haram_sanitary_products_v1';
 
-  // Default Categories List
+  // Default Categories List (Commented out for Production)
   static const List<String> defaultCategories = [
+    /*
     'پائپ اور فٹنگ',
     'مکسر اور نل',
     'سینٹری ویئر / سیٹس',
     'پانی کی ٹینکیاں',
     'ٹائلز اور سلیب',
     'متفرق سامان',
+    */
   ];
 
   // Default Measurement Units List
@@ -33,18 +35,21 @@ class AppConstants {
     'لیٹر',
   ];
 
-  // Default Companies List per Category
+  // Default Companies List per Category (Commented out for Production)
   static const Map<String, List<String>> defaultCategoryCompanies = {
+    /*
     'پائپ اور فٹنگ': ['ماسٹر', 'فاران', 'پاپولر', 'تارڑ', 'ایشیا', 'ٹویو'],
     'مکسر اور نل': ['فیصل', 'ماسٹر', 'سونیکس', 'تھری اسٹار', 'شاندار'],
     'سینٹری ویئر / سیٹس': ['ماسٹر', 'انعام', 'روائل', 'ایشیائی', 'کرمپورہ'],
     'پانی کی ٹینکیاں': ['ماسٹر', 'پاپولر', 'سپر', 'کلاسک'],
     'ٹائلز اور سلیب': ['ماسٹر', 'ٹائمز', 'اسٹار', 'ٹائمز سٹیل'],
     'متفرق سامان': ['عام', 'مقامی', 'چائنا'],
+    */
   };
 
-  // Seed Data: Pre-populated items for Sanitary & Tile Store
+  // Seed Data: Pre-populated items for Sanitary & Tile Store (Commented out for Production)
   static final List<ProductModel> seedProducts = [
+    /*
     ProductModel(
       id: 'prod_1',
       name: 'پائپ 3 انچ PPR (10 فٹ)',
@@ -155,5 +160,6 @@ class AppConstants {
       unit: 'مربع فٹ',
       updatedAt: DateTime.now(),
     ),
+    */
   ];
 }

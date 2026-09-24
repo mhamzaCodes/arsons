@@ -98,7 +98,20 @@ class InventoryController extends GetxController {
       }
     }
 
-    categories.value = categoriesSet.toList();
+    final newList = categoriesSet.toList();
+    bool changed = categories.length != newList.length;
+    if (!changed) {
+      for (int i = 0; i < newList.length; i++) {
+        if (categories[i] != newList[i]) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
+      categories.value = newList;
+    }
   }
 
   /// Persist products list to GetStorage
@@ -178,9 +191,6 @@ class InventoryController extends GetxController {
 
   /// Get all categories (merges default categories with custom categories)
   List<String> get allCategories {
-    if (categories.isEmpty) {
-      updateCategoriesList();
-    }
     return categories;
   }
 

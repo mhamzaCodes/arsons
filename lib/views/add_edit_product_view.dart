@@ -36,7 +36,9 @@ class _AddEditProductViewState extends State<AddEditProductView> {
   late TextEditingController _companyController;
   late TextEditingController _categoryController;
 
-  String _selectedCategory = AppConstants.defaultCategories.first;
+  String _selectedCategory = AppConstants.defaultCategories.isNotEmpty
+      ? AppConstants.defaultCategories.first
+      : '';
   bool _isCustomCategory = false;
 
   String _selectedCompany = '';
@@ -75,6 +77,10 @@ class _AddEditProductViewState extends State<AddEditProductView> {
       if (widget.initialCategory != null &&
           widget.initialCategory!.isNotEmpty) {
         _selectedCategory = widget.initialCategory!;
+      } else if (_controller.allCategories.isNotEmpty) {
+        _selectedCategory = _controller.allCategories.first;
+      } else {
+        _selectedCategory = '';
       }
 
       final categoryCompanies =
@@ -88,8 +94,15 @@ class _AddEditProductViewState extends State<AddEditProductView> {
       } else {
         _selectedCompany = _controller.allCompanies.isNotEmpty
             ? _controller.allCompanies.first
-            : 'ماسٹر';
+            : '';
       }
+    }
+
+    if (_selectedCategory.isEmpty || _controller.allCategories.isEmpty) {
+      _isCustomCategory = true;
+    }
+    if (_selectedCompany.isEmpty || _controller.allCompanies.isEmpty) {
+      _isCustomCompany = true;
     }
 
     _categoryController = TextEditingController(text: _selectedCategory);
@@ -389,7 +402,11 @@ class _AddEditProductViewState extends State<AddEditProductView> {
 
     final String activeVal = dropdownOptions.contains(_selectedCategory)
         ? _selectedCategory
-        : (dropdownOptions.isNotEmpty ? dropdownOptions.first : AppConstants.defaultCategories.first);
+        : (dropdownOptions.isNotEmpty
+            ? dropdownOptions.first
+            : (AppConstants.defaultCategories.isNotEmpty
+                ? AppConstants.defaultCategories.first
+                : ''));
 
     return _buildCardContainer(
       context,

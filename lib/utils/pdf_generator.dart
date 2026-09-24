@@ -585,13 +585,13 @@ class _RateListBuilder {
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             engine.text(
-              '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
+              '${AppStrings.ceoLabel} ${AppStrings.ceoName}',
               size: 10,
               color: PdfColors.white,
               bold: true,
             ),
             engine.text(
-              '${AppStrings.ceoLabel} ${AppStrings.ceoName}',
+              '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
               size: 10,
               color: _Palette.softWhite,
             ),
@@ -873,8 +873,16 @@ class _RateListBuilder {
   }
 
   static String _formatDate(DateTime d) {
-    final dd = d.day.toString().padLeft(2, '0');
-    final mm = d.month.toString().padLeft(2, '0');
-    return '$dd/$mm/${d.year}';
+    const urduMonths = [
+      'جنوری', 'فروری', 'مارچ', 'اپریل',
+      'مئی', 'جون', 'جولائی', 'اگست',
+      'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'
+    ];
+
+    final day = d.day;
+    final monthName = urduMonths[d.month - 1];
+    final year = d.year;
+
+    return '$day $monthName $year';
   }
 }
