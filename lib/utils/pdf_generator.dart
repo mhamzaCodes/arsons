@@ -6,74 +6,45 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:arabic_reshaper/arabic_reshaper.dart';
-import '../constants/strings.dart';
-import '../models/product_model.dart';
+import '../exports.dart';
 
-// =============================================================================
-// Constants & Theme Palette
-// =============================================================================
-
+// PDF theme palette
 class _Palette {
-  static const navy = PdfColor.fromInt(0xFF003846); // Brand Deep Teal
+  static const navy = PdfColor.fromInt(0xFF003846);
   static const navySoft = PdfColor.fromInt(0xFF005266);
-  static const gold = PdfColor.fromInt(0xFFD4AF37); // Gold accent
-  static const softWhite = PdfColor.fromInt(0xFFD5E6EA); // Secondary text on navy
-  static const band = PdfColor.fromInt(0xFF1E293B); // Dark band for company
-  static const text = PdfColor.fromInt(0xFF1E293B); // Dark text
-  static const muted = PdfColor.fromInt(0xFF64748B); // Secondary text
-  static const zebra = PdfColor.fromInt(0xFFF8FAFC); // Soft row tint
-  static const line = PdfColor.fromInt(0xFFCBD5E1); // Subtle divider
-  static const badgeBg = PdfColor.fromInt(0xFFF1F5F9); // Light badge background
+  static const gold = PdfColor.fromInt(0xFFD4AF37);
+  static const softWhite = PdfColor.fromInt(0xFFD5E6EA);
+  static const band = PdfColor.fromInt(0xFF1E293B);
+  static const text = PdfColor.fromInt(0xFF1E293B);
+  static const muted = PdfColor.fromInt(0xFF64748B);
+  static const zebra = PdfColor.fromInt(0xFFF8FAFC);
+  static const line = PdfColor.fromInt(0xFFCBD5E1);
 }
 
-const double _colGap = 12; // Gap between right & left columns
+const double _colGap = 12;
 const double _marginH = 14;
 const double _marginTop = 14;
 const double _marginBottom = 14;
 
-// Printable width inside margins: A4 width (595.28) - 2 * 14 = 567.28
-// Two columns with a 12pt gap -> each column is (567.28 - 12) / 2 = 277.64
 const double _tableWidth = 277.5;
 
-// Column widths inside each table (total = 277.5):
-// Visual order (left -> right): گاہک | تھوک | خرید | آئٹم | نمبر شمار
-const double _noW = 24.0; // نمبر شمار
-const double _nameW = 121.5; // آئٹم کا نام
-const double _rateW = 44.0; // Each rate column (x3 = 132.0)
+const double _noW = 24.0;
+const double _nameW = 121.5;
+const double _rateW = 44.0;
 
-// -----------------------------------------------------------------------------
-// Vertical budget (A4 height = 841.89pt). Every block has a FIXED height so the
-// number of rows per column can be computed instead of guessed:
-//
-//   available  = 841.89 - 14 (top) - 14 (bottom)          = 813.89
-//   header     = 88   (_headerH)
-//   gold rules = 7.8  (_rulesH)  + 6 gap (_afterHeaderGap)
-//   table head = 22   (_headH)
-//   footer     = 24   (_footerH)
-//   rows       = 32 * 20.5                                 = 656
-//   ----------------------------------------------------------------
-//   used       = 88 + 7.8 + 6 + 22 + 656 + 24              = 803.8   (10pt spare)
-//
-// If you change any header/footer/row height, re-check this sum. If pdf says
-// "Widget won't fit into the page", reduce _rowsPerColumn by one.
-// -----------------------------------------------------------------------------
 const double _headerH = 88.0;
 const double _rulesH = 7.8;
 const double _afterHeaderGap = 6.0;
-const double _headH = 22.0; // table header row
+const double _headH = 22.0;
 const double _footerH = 24.0;
 const double _rowH = 20.5;
 
-/// Rows (company banners + product rows) per column.
 const int _rowsPerColumn = 32;
 
-const String _nastaleeqAsset = 'assets/fonts/JameelNooriNastaleeq.ttf';
-const String _defaultNastaleeqFamily = 'JameelNooriNastaleeq';
+const String _nastaleeqAsset = AppConstants.nastaleeqFontPath;
+const String _defaultNastaleeqFamily = AppConstants.fontFamily;
 
-// =============================================================================
-// Row Data Model
-// =============================================================================
-
+// Row entry model
 abstract class PdfRowEntry {}
 
 class CompanyHeaderEntry extends PdfRowEntry {
@@ -88,14 +59,11 @@ class ProductItemEntry extends PdfRowEntry {
   ProductItemEntry(this.product, this.itemNumber);
 }
 
-// =============================================================================
-// Main Utility Entry Point
-// =============================================================================
-
+// PDF generator utility
 class PdfGenerator {
   static final _reshaper = ArabicReshaper();
 
-  /// Reshapes Urdu text so characters connect properly when rendered in vector font.
+  // Reshape Urdu text for vector font rendering
   static String formatUrdu(String input) {
     if (input.trim().isEmpty) return input;
     try {
@@ -105,16 +73,7 @@ class PdfGenerator {
     }
   }
 
-  /// Generates a printable PDF byte array for the store rate list.
-  ///
-  /// By default this uses **Nastaleeq raster text** (rendered via Flutter's
-  /// native TextPainter into crisp high-dpi PNGs) so Urdu calligraphic ligatures
-  /// render authentically with Jameel Noori Nastaliq. If the asset font cannot
-  /// be loaded, it seamlessly falls back to Noto Naskh Arabic vector text.
-  ///
-  /// Set [useNastaleeq] to `false` if you explicitly want vector Naskh text.
-  /// [nastaleeqFamily] must match the font-family declared in your app's
-  /// pubspec.yaml.
+  // Generate printable rate list PDF
   static Future<Uint8List> generateRateListPdf(
       List<ProductModel> products, {
         PdfPageFormat? pageFormat,
@@ -136,12 +95,10 @@ class PdfGenerator {
       theme: pw.ThemeData.withFont(base: fonts.$1, bold: fonts.$2),
     );
 
-    // Pass 1: dry run, only records which strings need rasterizing.
     engine.recording = true;
     builder.buildPages();
     await engine.rasterizePending();
 
-    // Pass 2: real build using the rasterized text.
     engine.recording = false;
     final pdf = pw.Document();
     for (final page in builder.buildPages()) {
@@ -150,7 +107,6 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  /// (regular, bold) vector fonts.
   static Future<(pw.Font, pw.Font)> _loadVectorFonts({
     required bool preferBundled,
   }) async {
@@ -182,10 +138,6 @@ class PdfGenerator {
   }
 }
 
-// =============================================================================
-// Text engine: Nastaleeq raster text (with vector fallback)
-// =============================================================================
-
 class _Req {
   final String text;
   final double size;
@@ -196,8 +148,8 @@ class _Req {
 
 class _Raster {
   final pw.MemoryImage image;
-  final double width; // PDF points
-  final double height; // PDF points
+  final double width;
+  final double height;
   _Raster(this.image, this.width, this.height);
 }
 
@@ -218,7 +170,6 @@ class _TextEngine {
   final Map<String, _Req> _pending = {};
   final Map<String, _Raster> _cache = {};
 
-  /// 4x => ~288 dpi when printed at 100%. Sharp, still small files.
   static const double _scale = 4;
 
   static int _argb(PdfColor c) =>
@@ -230,7 +181,6 @@ class _TextEngine {
   String _key(String t, double s, PdfColor c, bool b) =>
       '${b ? 'b' : 'r'}|$s|${_argb(c)}|$t';
 
-  /// Urdu / mixed Urdu-English text. Pass RAW (un-reshaped) strings.
   pw.Widget text(
       String raw, {
         required double size,
@@ -305,15 +255,11 @@ class _TextEngine {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Vector fallback with manual RTL ordering (brackets / Latin safe)
-  // ---------------------------------------------------------------------------
-
   static final RegExp _tokenRe = RegExp(
-    r'[A-Za-z0-9]+(?:[.\-/×][A-Za-z0-9]+)*' // PPR, 10, 60x60, 1.5, 3/4
-    r'|[()\[\]]' // brackets
-    r'|\s+' // whitespace
-    r'|[^\sA-Za-z0-9()\[\]]+', // Urdu words / punctuation
+    r'[A-Za-z0-9]+(?:[.\-/×][A-Za-z0-9]+)*'
+    r'|[()\[\]]'
+    r'|\s+'
+    r'|[^\sA-Za-z0-9()\[\]]+',
   );
 
   static const Map<String, String> _mirror = {
@@ -365,7 +311,6 @@ class _TextEngine {
     );
   }
 
-  /// Plain LTR text (numbers, phone) in the vector bold font.
   pw.Widget number(String t, {required double size, required PdfColor color}) {
     return pw.Text(
       t,
@@ -373,10 +318,6 @@ class _TextEngine {
     );
   }
 }
-
-// =============================================================================
-// Page builder
-// =============================================================================
 
 class _RateListBuilder {
   _RateListBuilder({
@@ -390,7 +331,6 @@ class _RateListBuilder {
   final pw.ThemeData theme;
 
   List<pw.Page> buildPages() {
-    // Group by company
     final grouped = <String, List<ProductModel>>{};
     for (final p in products) {
       grouped.putIfAbsent(p.company, () => <ProductModel>[]).add(p);
@@ -403,31 +343,29 @@ class _RateListBuilder {
 
     final pages = <pw.Page>[];
     for (int page = 0; page < totalPages; page++) {
-      // Column 2n -> RIGHT table (filled first); 2n+1 -> LEFT (second).
       final right =
       (page * 2) < columns.length ? columns[page * 2] : <PdfRowEntry>[];
       final left = (page * 2 + 1) < columns.length
           ? columns[page * 2 + 1]
           : <PdfRowEntry>[];
 
-      // Built eagerly (not inside pw.Page.build) so the recording pass sees it.
       final content = pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          _header(page + 1, totalPages, dateText),
+          _header(page + 1, totalPages, dateText, products.length),
           _goldRules(),
           pw.SizedBox(height: _afterHeaderGap),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             mainAxisAlignment: pw.MainAxisAlignment.center,
             children: [
-              _tableOrSpace(left), // LEFT (second)
+              _tableOrSpace(left),
               pw.SizedBox(width: _colGap),
-              _tableOrSpace(right), // RIGHT (first)
+              _tableOrSpace(right),
             ],
           ),
           pw.Spacer(),
-          _footer(products.length),
+          _footer(page + 1, totalPages),
         ],
       );
 
@@ -447,10 +385,6 @@ class _RateListBuilder {
     }
     return pages;
   }
-
-  // ---------------------------------------------------------------------------
-  // Pagination
-  // ---------------------------------------------------------------------------
 
   List<List<PdfRowEntry>> _splitIntoColumns(
       Map<String, List<ProductModel>> grouped,
@@ -480,18 +414,9 @@ class _RateListBuilder {
     return columns;
   }
 
-  // ---------------------------------------------------------------------------
-  // Header: framed letterhead (fixed height => predictable page budget)
-  //
-  //  [ ریٹ لسٹ / تاریخ / صفحہ ]   [ Shop name ]   [ Proprietor / CEO / Phone ]
-  //                                 ─── • ───
-  //                                  Address
-  // ---------------------------------------------------------------------------
+  pw.Widget _header(int page, int totalPages, String dateText, int totalItems) {
+    const double innerH = _headerH - 12;
 
-  pw.Widget _header(int page, int totalPages, String dateText) {
-    const double innerH = _headerH - 12; // 6pt padding top + bottom
-
-    // LEFT: document title, date and page badge
     final left = pw.SizedBox(
       width: 130,
       height: innerH,
@@ -502,10 +427,10 @@ class _RateListBuilder {
           mainAxisSize: pw.MainAxisSize.min,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            engine.text('ریٹ لسٹ', size: 14, color: _Palette.gold, bold: true),
+            engine.text(AppStrings.rateListTitle, size: 14, color: _Palette.gold, bold: true),
             pw.SizedBox(height: 1),
             engine.text(
-              'تاریخ: $dateText',
+              '${AppStrings.pdfHeaderDate} $dateText',
               size: 9.5,
               color: _Palette.softWhite,
             ),
@@ -517,7 +442,7 @@ class _RateListBuilder {
                 borderRadius: pw.BorderRadius.circular(10),
               ),
               child: engine.text(
-                'صفحہ $page از $totalPages',
+                '${AppStrings.pdfTotalItems} $totalItems',
                 size: 9,
                 color: PdfColors.white,
                 bold: true,
@@ -528,7 +453,6 @@ class _RateListBuilder {
       ),
     );
 
-    // CENTER: shop name + ornament + address
     final center = pw.SizedBox(
       width: 254,
       height: innerH,
@@ -573,7 +497,6 @@ class _RateListBuilder {
       ),
     );
 
-    // RIGHT: proprietor, CEO and phone pill
     final right = pw.SizedBox(
       width: 150,
       height: innerH,
@@ -621,7 +544,6 @@ class _RateListBuilder {
       ),
       child: pw.Stack(
         children: [
-          // Thin gold inner frame
           pw.Positioned(
             left: 0,
             right: 0,
@@ -648,7 +570,6 @@ class _RateListBuilder {
     );
   }
 
-  /// Double gold rule under the header. Total height = [_rulesH] (7.8pt).
   pw.Widget _goldRules() {
     return pw.SizedBox(
       height: _rulesH,
@@ -664,7 +585,7 @@ class _RateListBuilder {
     );
   }
 
-  pw.Widget _footer(int totalItems) {
+  pw.Widget _footer(int page, int totalPages) {
     return pw.SizedBox(
       height: _footerH,
       child: pw.Column(
@@ -677,12 +598,12 @@ class _RateListBuilder {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               engine.text(
-                'کل آئٹمز: $totalItems',
+                'صفحہ $page از $totalPages',
                 size: 8.5,
                 color: _Palette.muted,
               ),
               engine.text(
-                'ریٹ بغیر اطلاع تبدیل ہو سکتے ہیں',
+                AppStrings.pdfNotice,
                 size: 8.5,
                 color: _Palette.muted,
               ),
@@ -692,10 +613,6 @@ class _RateListBuilder {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Table
-  // ---------------------------------------------------------------------------
 
   pw.Widget _tableOrSpace(List<PdfRowEntry> entries) {
     if (entries.isEmpty) return pw.SizedBox(width: _tableWidth);
@@ -709,7 +626,7 @@ class _RateListBuilder {
     for (final entry in entries) {
       if (entry is CompanyHeaderEntry) {
         rows.add(_companyRow(entry));
-        shaded = false; // restart zebra after each banner
+        shaded = false;
       } else if (entry is ProductItemEntry) {
         rows.add(_productRow(entry, shaded: shaded));
         shaded = !shaded;
@@ -726,7 +643,6 @@ class _RateListBuilder {
     );
   }
 
-  /// Visual order (left -> right): گاہک | تھوک | خرید | آئٹم | نمبر شمار
   pw.Widget _headerRow() {
     pw.Widget h(String label, double w, {bool divider = true}) => _cell(
       width: w,
@@ -756,11 +672,10 @@ class _RateListBuilder {
     );
   }
 
-  /// Full-width company band with a gold accent bar on the right edge.
   pw.Widget _companyRow(CompanyHeaderEntry entry) {
     final label = entry.continued
-        ? 'کمپنی: ${entry.companyName} (جاری)'
-        : 'کمپنی: ${entry.companyName}';
+        ? '${AppStrings.pdfCompanyPrefix}${entry.companyName}${AppStrings.pdfContinuedSuffix}'
+        : '${AppStrings.pdfCompanyPrefix}${entry.companyName}';
     const side = pw.BorderSide(color: _Palette.line, width: 0.6);
 
     return pw.Container(

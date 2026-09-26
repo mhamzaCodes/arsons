@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../constants/colors.dart';
-import '../constants/strings.dart';
+import '../constants/string.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/responsive.dart';
 import 'login_view.dart';
@@ -44,11 +44,11 @@ class _RegisterViewState extends State<RegisterView> {
 
     if (password != confirmPassword) {
       Get.snackbar(
-        'خرابی',
+        AppStrings.errorTitle,
         AppStrings.passwordMismatch,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.deleteRed,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
       return;
@@ -62,20 +62,20 @@ class _RegisterViewState extends State<RegisterView> {
 
     if (success) {
       Get.snackbar(
-        'کامیابی',
+        AppStrings.successTitle,
         AppStrings.registerSuccess,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.successGreen,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     } else {
       Get.snackbar(
-        'رجسٹریشن ناکام',
+        AppStrings.registerFailedTitle,
         AppStrings.userAlreadyExists,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.deleteRed,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     }
@@ -120,12 +120,12 @@ class _RegisterViewState extends State<RegisterView> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.borderGrey),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
+            color: AppColors.shadowSoft,
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -145,7 +145,7 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'نیا اکاؤنٹ بنائیں',
+                  AppStrings.createNewAccountHeader,
                   style: TextStyle(
                     fontSize: Responsive.fontSize(context, 19, desktopSize: 23),
                     fontWeight: FontWeight.bold,
@@ -379,7 +379,7 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryTeal,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.white,
                   elevation: 3,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

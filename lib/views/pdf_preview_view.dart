@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
-import '../constants/colors.dart';
-import '../constants/strings.dart';
-import '../controllers/inventory_controller.dart';
-import '../models/product_model.dart';
-import '../utils/pdf_generator.dart';
+import '../exports.dart';
 
-/// Screen displaying PDF Rate List preview with print & share support
+// PDF rate list preview view
 class PdfPreviewView extends StatelessWidget {
   final List<ProductModel>? products;
 
@@ -28,18 +24,17 @@ class PdfPreviewView extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.primaryTeal,
           elevation: 0,
-          title: const Text(
+          title: Text(
             AppStrings.rateListTitle,
-            style: TextStyle(
-              color: Colors.white,
+            style: const TextStyle(
+              color: AppColors.white,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: AppColors.white),
         ),
         body: Obx(() {
-          // If specific products passed, use them; otherwise default to ALL products in storage
           final productsList = products ?? controller.products;
 
           if (productsList.isEmpty) {
@@ -72,10 +67,10 @@ class PdfPreviewView extends StatelessWidget {
               child: CircularProgressIndicator(color: AppColors.primaryTeal),
             ),
             onError: (context, error) {
-              return Center(
+              return const Center(
                 child: Text(
-                  'PDF تیار کرنے میں خرابی',
-                  style: const TextStyle(
+                  AppStrings.pdfErrorText,
+                  style: TextStyle(
                     color: AppColors.deleteRed,
                     fontWeight: FontWeight.bold,
                   ),

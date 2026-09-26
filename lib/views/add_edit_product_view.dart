@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../constants/colors.dart';
-import '../constants/constants.dart';
-import '../constants/strings.dart';
-import '../controllers/inventory_controller.dart';
-import '../models/product_model.dart';
-import '../utils/responsive.dart';
+import '../exports.dart';
 
-/// Form View to Add or Edit Inventory Items with Persistent Companies & Category/Company/Unit Dropdowns
+// Form view to add or edit product items
 class AddEditProductView extends StatefulWidget {
   final ProductModel? productToEdit;
   final String? initialCategory;
@@ -47,9 +42,9 @@ class _AddEditProductViewState extends State<AddEditProductView> {
   String _selectedUnit = AppStrings.defaultUnit;
   bool _isCustomUnit = false;
 
-  static const String _customCategoryKey = '__custom_new_category__';
-  static const String _customCompanyKey = '__custom_new_company__';
-  static const String _customUnitKey = '__custom_new_unit__';
+  static const String _customCategoryKey = AppConstants.customCategoryKey;
+  static const String _customCompanyKey = AppConstants.customCompanyKey;
+  static const String _customUnitKey = AppConstants.customUnitKey;
 
   @override
   void initState() {
@@ -153,7 +148,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                   : _unitController.text.trim()));
 
       if (widget.productToEdit != null) {
-        // Update existing item
         final updatedProduct = widget.productToEdit!.copyWith(
           name: name,
           category: category,
@@ -172,11 +166,10 @@ class _AddEditProductViewState extends State<AddEditProductView> {
           AppStrings.itemUpdatedSuccess,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColors.successGreen,
-          colorText: Colors.white,
+          colorText: AppColors.white,
           margin: const EdgeInsets.all(12),
         );
       } else {
-        // Create new item
         final newProduct = ProductModel(
           id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
           name: name,
@@ -196,7 +189,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
           AppStrings.itemAddedSuccess,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColors.primaryTeal,
-          colorText: Colors.white,
+          colorText: AppColors.white,
           margin: const EdgeInsets.all(12),
         );
       }
@@ -218,13 +211,13 @@ class _AddEditProductViewState extends State<AddEditProductView> {
           title: Text(
             isEdit ? AppStrings.editItem : AppStrings.addNewItem,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontWeight: FontWeight.bold,
               fontSize: Responsive.fontSize(context, 20, desktopSize: 24),
             ),
           ),
           centerTitle: true,
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: AppColors.white),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -235,7 +228,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Category & Company Section (Row on Desktop, Column on Mobile)
                   if (!isMobile) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +244,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                   ],
                   const SizedBox(height: 12),
 
-                  // Item Name & Unit Section (Row on Desktop, Column on Mobile)
                   if (!isMobile) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +260,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                   ],
                   const SizedBox(height: 12),
 
-                  // Rates Section Card
                   Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -285,7 +275,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                               const Icon(Icons.sell, color: AppColors.primaryTeal),
                               const SizedBox(width: 8),
                               Text(
-                                'ریٹس کا اندراج (قیمت فی یونٹ)',
+                                AppStrings.ratesSectionTitle,
                                 style: TextStyle(
                                   fontSize: Responsive.fontSize(context, 16, desktopSize: 19),
                                   fontWeight: FontWeight.bold,
@@ -296,7 +286,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                           ),
                           const Divider(height: 24),
 
-                          // Rates Row on Desktop, Column on Mobile
                           if (!isMobile) ...[
                             Row(
                               children: [
@@ -362,12 +351,11 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Action Submit Button
                   ElevatedButton(
                     onPressed: _saveForm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryTeal,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -416,6 +404,60 @@ class _AddEditProductViewState extends State<AddEditProductView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!_isCustomCategory && dropdownOptions.isNotEmpty) ...[
+            if (dropdownOptions.length > 1) ...[
+              SizedBox(
+                height: 42,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  itemCount: dropdownOptions.length,
+                  itemBuilder: (context, idx) {
+                    final cat = dropdownOptions[idx];
+                    final bool isSelected = cat == activeVal;
+                    return Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 6),
+                      child: ChoiceChip(
+                        label: Text(
+                          cat,
+                          style: TextStyle(
+                            fontSize: Responsive.fontSize(context, 12, desktopSize: 15),
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? AppColors.white : AppColors.textDark,
+                          ),
+                        ),
+                        selected: isSelected,
+                        showCheckmark: true,
+                        checkmarkColor: isSelected ? AppColors.white : AppColors.textDark,
+                        selectedColor: AppColors.primaryTeal,
+                        backgroundColor: AppColors.surfaceLight,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primaryTeal : AppColors.borderGrey,
+                        ),
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedCategory = cat;
+                            _categoryController.text = cat;
+                            _isCustomCategory = false;
+
+                            final categoryCompanies =
+                                _controller.getCompaniesForCategory(_selectedCategory);
+
+                            if (categoryCompanies.isNotEmpty) {
+                              _selectedCompany = categoryCompanies.first;
+                              _companyController.text = _selectedCompany;
+                              _isCustomCompany = false;
+                            }
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
             DropdownButtonFormField<String>(
               initialValue: activeVal,
               decoration: const InputDecoration(
@@ -434,12 +476,12 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                         ),
                       ),
                     )),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                   value: _customCategoryKey,
                   child: Text(
-                    '+ نئی کیٹیگری کا نام درج کریں',
+                    AppStrings.enterNewCategoryPrompt,
                     style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryTeal,
                     ),
@@ -459,7 +501,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                     _categoryController.text = val;
                     _isCustomCategory = false;
 
-                    // Reload available companies for newly chosen category
                     final categoryCompanies =
                         _controller.getCompaniesForCategory(_selectedCategory);
 
@@ -485,7 +526,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'نئی کیٹیگری کا نام لکھیں',
+                      hintText: AppStrings.writeNewCategoryHint,
                       border: InputBorder.none,
                       hintStyle: TextStyle(
                         color: AppColors.textSecondary,
@@ -515,7 +556,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                 if (dropdownOptions.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.list, color: AppColors.primaryTeal),
-                    tooltip: 'فہرست سے منتخب کریں',
+                    tooltip: AppStrings.selectFromListTooltip,
                     onPressed: () {
                       setState(() {
                         _isCustomCategory = false;
@@ -536,7 +577,6 @@ class _AddEditProductViewState extends State<AddEditProductView> {
     final categoryCompanies =
         _controller.getCompaniesForCategory(_selectedCategory);
 
-    // If category companies list is available, use it; otherwise fallback to all companies
     final List<String> dropdownOptions = categoryCompanies.isNotEmpty
         ? List.from(categoryCompanies)
         : List.from(_controller.allCompanies);
@@ -558,6 +598,51 @@ class _AddEditProductViewState extends State<AddEditProductView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (!_isCustomCompany && dropdownOptions.isNotEmpty) ...[
+            if (dropdownOptions.length > 1) ...[
+              SizedBox(
+                height: 42,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  itemCount: dropdownOptions.length,
+                  itemBuilder: (context, idx) {
+                    final comp = dropdownOptions[idx];
+                    final bool isSelected = comp == activeVal;
+                    return Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 6),
+                      child: ChoiceChip(
+                        label: Text(
+                          comp,
+                          style: TextStyle(
+                            fontSize: Responsive.fontSize(context, 12, desktopSize: 15),
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? AppColors.white : AppColors.textDark,
+                          ),
+                        ),
+                        selected: isSelected,
+                        showCheckmark: true,
+                        checkmarkColor: isSelected ? AppColors.white : AppColors.textDark,
+                        selectedColor: AppColors.secondaryTeal,
+                        backgroundColor: AppColors.surfaceLight,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.secondaryTeal : AppColors.borderGrey,
+                        ),
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedCompany = comp;
+                            _companyController.text = comp;
+                            _isCustomCompany = false;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
             DropdownButtonFormField<String>(
               initialValue: activeVal,
               decoration: const InputDecoration(
@@ -576,12 +661,12 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                         ),
                       ),
                     )),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                   value: _customCompanyKey,
                   child: Text(
-                    '+ نئی کمپنی کا نام درج کریں',
+                    AppStrings.enterNewCompanyPrompt,
                     style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryTeal,
                     ),
@@ -637,7 +722,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                 if (dropdownOptions.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.list, color: AppColors.primaryTeal),
-                    tooltip: 'فہرست سے منتخب کریں',
+                    tooltip: AppStrings.selectFromListTooltip,
                     onPressed: () {
                       setState(() {
                         _isCustomCompany = false;
@@ -720,12 +805,12 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                         ),
                       ),
                     )),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                   value: _customUnitKey,
                   child: Text(
-                    '+ نیا یونٹ درج کریں',
+                    AppStrings.enterNewUnitPrompt,
                     style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryTeal,
                     ),
@@ -780,7 +865,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.list, color: AppColors.primaryTeal),
-                  tooltip: 'فہرست سے منتخب کریں',
+                  tooltip: AppStrings.selectFromListTooltip,
                   onPressed: () {
                     setState(() {
                       _isCustomUnit = false;
@@ -875,7 +960,7 @@ class _AddEditProductViewState extends State<AddEditProductView> {
           return AppStrings.requiredField;
         }
         if (double.tryParse(val.trim()) == null) {
-          return 'صحیح عدد درج کریں';
+          return AppStrings.validNumberError;
         }
         return null;
       },

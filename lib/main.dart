@@ -1,16 +1,31 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'exports.dart';
 
+// Custom ScrollBehavior for drag scrolling
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.unknown,
+      };
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize GetStorage persistence
+  // Storage initialization
   await GetStorage.init();
 
-  // Initialize AuthController globally
+  // Controller registration
   Get.put(AuthController(), permanent: true);
 
   runApp(const MyApp());
@@ -24,15 +39,16 @@ class MyApp extends StatelessWidget {
     final AuthController authController = AuthController.to;
 
     return GetMaterialApp(
-      title: 'AR Sons',
+      title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
 
-      // RTL & Locale Settings
-      locale: const Locale('ur', 'PK'),
-      fallbackLocale: const Locale('en', 'US'),
+      // Localization & RTL setup
+      locale: AppConstants.localeUrdu,
+      fallbackLocale: AppConstants.localeEnglish,
       supportedLocales: const [
-        Locale('ur', 'PK'),
-        Locale('en', 'US'),
+        AppConstants.localeUrdu,
+        AppConstants.localeEnglish,
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -40,7 +56,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      // Theme Configuration with Deep Teal & Urdu Font Family
+      // Theme configuration
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: AppConstants.fontFamily,
@@ -53,13 +69,13 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primaryTeal,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
           centerTitle: true,
           elevation: 0,
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: AppColors.primaryTeal,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
         ),
         cardTheme: CardThemeData(
           color: AppColors.cardBg,
@@ -68,9 +84,12 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
+        chipTheme: const ChipThemeData(
+          checkmarkColor: AppColors.white,
+        ),
       ),
 
-      // Entry View - Navigates based on persistent login state
+      // Initial view based on login state
       home: Obx(() => authController.isLoggedIn.value
           ? const HomeView()
           : const LoginView()),

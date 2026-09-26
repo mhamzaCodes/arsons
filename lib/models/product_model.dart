@@ -1,15 +1,15 @@
 import 'dart:convert';
 
-/// Data Model representing a Sanitary and Tile Store Inventory Product
+// Product model for sanitary and tile items
 class ProductModel {
   final String id;
-  final String name; // Urdu item name
-  final String category; // Category name in Urdu
-  final String company; // Company brand name in Urdu
-  final double purchaseRate; // دوکاندار / خرید ریٹ
-  final double wholesaleRate; // تھوک ریٹ
-  final double customerRate; // گاہک ریٹ
-  final String unit; // عدد / فٹ / سیٹ
+  final String name;
+  final String category;
+  final String company;
+  final double purchaseRate;
+  final double wholesaleRate;
+  final double customerRate;
+  final String unit;
   final DateTime updatedAt;
 
   ProductModel({

@@ -1,7 +1,7 @@
 // Constants
 export 'constants/colors.dart';
-export 'constants/constants.dart';
-export 'constants/strings.dart';
+export 'constants/constant.dart';
+export 'constants/string.dart';
 
 // Models
 export 'models/product_model.dart';

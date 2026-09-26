@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../constants/colors.dart';
-import '../constants/strings.dart';
+import '../constants/string.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/responsive.dart';
 
@@ -60,20 +60,20 @@ class _SettingsViewState extends State<SettingsView> {
       _currentPasswordController.clear();
       _newPasswordController.clear();
       Get.snackbar(
-        'کامیابی',
+        AppStrings.successTitle,
         AppStrings.profileUpdatedSuccess,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.successGreen,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     } else {
       Get.snackbar(
-        'اپ ڈیٹ ناکام',
-        'موجودہ پاس ورڈ غلط ہے یا فون نمبر پہلے سے موجود ہے!',
+        AppStrings.updateFailedTitle,
+        AppStrings.updateFailedMessage,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.deleteRed,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     }
@@ -84,15 +84,15 @@ class _SettingsViewState extends State<SettingsView> {
       Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
+          backgroundColor: AppColors.white,
+          surfaceTintColor: AppColors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           icon: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.deleteRed.withOpacity(0.10),
+              color: AppColors.deleteRed.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -138,7 +138,7 @@ class _SettingsViewState extends State<SettingsView> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.deleteRed,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -209,7 +209,7 @@ class _SettingsViewState extends State<SettingsView> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x22000000),
+              color: AppColors.shadowMedium,
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -221,7 +221,7 @@ class _SettingsViewState extends State<SettingsView> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.goldAccent, width: 2),
               ),
@@ -241,19 +241,19 @@ class _SettingsViewState extends State<SettingsView> {
                     style: TextStyle(
                       fontSize: Responsive.fontSize(context, 19, desktopSize: 23),
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.phone_android_rounded, size: 16, color: Colors.white70),
+                      const Icon(Icons.phone_android_rounded, size: 16, color: AppColors.white70),
                       const SizedBox(width: 6),
                       Text(
                         user?.phone ?? '',
                         style: TextStyle(
                           fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-                          color: Colors.white70,
+                          color: AppColors.white70,
                         ),
                       ),
                     ],
@@ -262,14 +262,14 @@ class _SettingsViewState extends State<SettingsView> {
               ),
             ),
             Container(
-              padding: EdgeInsets.all(6.0),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(6.0),
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white
+                color: AppColors.white,
               ),
               child: IconButton(
                 onPressed: () => _showLogoutConfirmation(context),
-                icon: Icon(Icons.logout_rounded, size: 24, color: Colors.red,),
+                icon: const Icon(Icons.logout_rounded, size: 24, color: AppColors.red),
               ),
             )
           ],
@@ -282,12 +282,12 @@ class _SettingsViewState extends State<SettingsView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.borderGrey),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F000000),
+            color: AppColors.shadowLight,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -307,7 +307,7 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'پروفائل اور پاس ورڈ تبدیل کریں',
+                  AppStrings.editProfileSectionTitle,
                   style: TextStyle(
                     fontSize: Responsive.fontSize(context, 17, desktopSize: 20),
                     fontWeight: FontWeight.bold,
@@ -392,7 +392,7 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(height: 8),
 
             Text(
-              'پاس ورڈ تبدیلی (اگر پاس ورڈ تبدیل کرنا چاہیں):',
+              AppStrings.passwordChangeSectionTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
@@ -403,7 +403,7 @@ class _SettingsViewState extends State<SettingsView> {
 
             // Current Password
             Text(
-              'موجودہ پاس ورڈ',
+              AppStrings.currentPasswordLabel,
               style: TextStyle(
                 fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
                 color: AppColors.textSecondary,
@@ -418,7 +418,7 @@ class _SettingsViewState extends State<SettingsView> {
                 fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
               ),
               decoration: InputDecoration(
-                hintText: 'موجودہ پاس ورڈ درج کریں...',
+                hintText: AppStrings.currentPasswordHint,
                 prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryTeal),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -499,7 +499,7 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryTeal,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -517,7 +517,7 @@ class _SettingsViewState extends State<SettingsView> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderGrey),
       ),

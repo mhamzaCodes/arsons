@@ -4,18 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:file_picker/file_picker.dart';
-import '../constants/colors.dart';
-import '../constants/constants.dart';
-import '../constants/strings.dart';
-import '../controllers/inventory_controller.dart';
-import '../models/product_model.dart';
-import '../utils/responsive.dart';
-import 'add_edit_product_view.dart';
-import 'company_list_view.dart';
-import 'pdf_preview_view.dart';
-import 'settings_view.dart';
+import '../exports.dart';
 
-/// Main Dashboard View with Dynamic Categories, Scaled Text & Data Backup/Restore
+// Main dashboard view
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -36,7 +27,6 @@ class _HomeViewState extends State<HomeView>
     super.initState();
     _initTabController();
 
-    // Listen for dynamic category list updates
     ever(controller.categories, (_) {
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -110,10 +100,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Header (brand + phone + PDF + Backup & Search)
-  // ===========================================================================
-
+  // Header card
   Widget _buildHeader(BuildContext context, bool isMobile) {
     final phoneChip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -152,7 +139,7 @@ class _HomeViewState extends State<HomeView>
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x33000000),
+            color: AppColors.shadowDeep,
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -179,7 +166,7 @@ class _HomeViewState extends State<HomeView>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize:
                                 Responsive.fontSize(context, 18, desktopSize: 23),
@@ -193,31 +180,31 @@ class _HomeViewState extends State<HomeView>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: AppColors.white70,
                                 fontSize:
                                     Responsive.fontSize(context, 12, desktopSize: 15),
                               ),
                             ),
-                            SizedBox(width: 6.0,),
+                            const SizedBox(width: 6.0),
                             Text(
                               '|',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: AppColors.white70,
                                 fontSize:
-                                Responsive.fontSize(context, 12, desktopSize: 15),
+                                    Responsive.fontSize(context, 12, desktopSize: 15),
                               ),
                             ),
-                            SizedBox(width: 6.0,),
+                            const SizedBox(width: 6.0),
                             Text(
                               '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: AppColors.white70,
                                 fontSize:
-                                Responsive.fontSize(context, 12, desktopSize: 15),
+                                    Responsive.fontSize(context, 12, desktopSize: 15),
                               ),
                             ),
                           ],
@@ -232,7 +219,6 @@ class _HomeViewState extends State<HomeView>
                   if (!isMobile) ...[
                     phoneChip,
                     const SizedBox(width: 10),
-                    // _buildBackupButton(context),
                   ],
                   const SizedBox(width: 6),
                   _buildPdfButton(),
@@ -255,11 +241,11 @@ class _HomeViewState extends State<HomeView>
       height: 48,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x33000000),
+            color: AppColors.shadowDeep,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),
@@ -268,7 +254,7 @@ class _HomeViewState extends State<HomeView>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
-          'assets/icon.jpg',
+          AppConstants.appIconPath,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stack) => const Icon(
             Icons.storefront_rounded,
@@ -279,33 +265,11 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  Widget _buildBackupButton(BuildContext context) {
-    return Tooltip(
-      message: 'ڈیٹا بیک اپ اور ریسٹور (Backup & Restore)',
-      child: Material(
-        color: Colors.white.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => _showBackupRestoreDialog(context),
-          child: const Padding(
-            padding: EdgeInsets.all(11),
-            child: Icon(
-              Icons.cloud_sync_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPdfButton() {
     return Tooltip(
       message: AppStrings.quickPdfDownload,
       child: Material(
-        color: Colors.white.withOpacity(0.16),
+        color: AppColors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -314,7 +278,7 @@ class _HomeViewState extends State<HomeView>
             padding: EdgeInsets.all(11),
             child: Icon(
               Icons.picture_as_pdf_rounded,
-              color: Colors.white,
+              color: AppColors.white,
               size: 26,
             ),
           ),
@@ -327,7 +291,7 @@ class _HomeViewState extends State<HomeView>
     return Tooltip(
       message: AppStrings.settingsTitle,
       child: Material(
-        color: Colors.white.withOpacity(0.16),
+        color: AppColors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -336,7 +300,7 @@ class _HomeViewState extends State<HomeView>
             padding: EdgeInsets.all(11),
             child: Icon(
               Icons.settings_rounded,
-              color: Colors.white,
+              color: AppColors.white,
               size: 26,
             ),
           ),
@@ -351,7 +315,7 @@ class _HomeViewState extends State<HomeView>
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x22000000),
+            color: AppColors.shadowMedium,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -365,7 +329,7 @@ class _HomeViewState extends State<HomeView>
         ),
         onChanged: (val) {
           controller.updateSearchQuery(val);
-          setState(() {}); // refresh clear button
+          setState(() {});
         },
         decoration: InputDecoration(
           hintText: AppStrings.searchHint,
@@ -387,7 +351,7 @@ class _HomeViewState extends State<HomeView>
                   },
                 )
               : null,
-          fillColor: Colors.white,
+          fillColor: AppColors.white,
           filled: true,
           contentPadding: const EdgeInsets.symmetric(
             vertical: 12,
@@ -402,10 +366,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Stats
-  // ===========================================================================
-
+  // Dashboard stats tiles
   Widget _buildStatsHeader(BuildContext context) {
     return ResponsiveCenteredBody(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
@@ -429,7 +390,7 @@ class _HomeViewState extends State<HomeView>
               child: _statTile(
                 context,
                 icon: Icons.filter_alt_rounded,
-                label: 'دستیاب آئٹمز',
+                label: AppStrings.availableItems,
                 value: categoryCount,
                 color: AppColors.secondaryTeal,
               ),
@@ -450,12 +411,12 @@ class _HomeViewState extends State<HomeView>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderGrey),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F000000),
+            color: AppColors.shadowLight,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),
@@ -466,7 +427,7 @@ class _HomeViewState extends State<HomeView>
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: color),
@@ -502,52 +463,55 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Category tabs (Dynamic Rx List) + company chips
-  // ===========================================================================
-
+  // Categories & Company filters
   Widget _buildCategoryTabs(BuildContext context) {
     return ResponsiveCenteredBody(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: Obx(() {
           final catList = controller.categories;
           if (catList.isEmpty) return const SizedBox.shrink();
 
-          return TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            dividerColor: Colors.transparent,
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicatorPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
-            indicator: BoxDecoration(
-              color: AppColors.primaryTeal,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryTeal.withOpacity(0.35),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          return SizedBox(
+            height: 48,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              dividerColor: AppColors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicatorPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+              indicator: BoxDecoration(
+                color: AppColors.primaryTeal,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryTeal.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              splashBorderRadius: BorderRadius.circular(22),
+              labelColor: AppColors.white,
+              unselectedLabelColor: AppColors.textSecondary,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+              ),
+              tabs: catList
+                  .map((cat) => Tab(height: 42, text: cat))
+                  .toList(),
             ),
-            splashBorderRadius: BorderRadius.circular(22),
-            labelColor: Colors.white,
-            unselectedLabelColor: AppColors.textSecondary,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-            labelStyle: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-            ),
-            unselectedLabelStyle: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-            ),
-            tabs: catList
-                .map((cat) => Tab(height: 42, text: cat))
-                .toList(),
           );
         }),
       ),
@@ -563,30 +527,35 @@ class _HomeViewState extends State<HomeView>
 
         return SizedBox(
           height: 54,
-          child: ListView(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            children: [
-              _companyChip(
-                context,
-                label: AppStrings.allCompanies,
-                selected: selectedCompany.isEmpty,
-                selectedColor: AppColors.primaryTeal,
-                onTap: controller.clearCompanyFilter,
-              ),
-              ...companies.map(
-                (comp) => Padding(
-                  padding: const EdgeInsetsDirectional.only(start: 8),
-                  child: _companyChip(
-                    context,
-                    label: comp,
-                    selected: selectedCompany == comp,
-                    selectedColor: AppColors.secondaryTeal,
-                    onTap: () => controller.selectCompany(comp),
-                  ),
+            itemCount: companies.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _companyChip(
+                  context,
+                  label: AppStrings.allCompanies,
+                  selected: selectedCompany.isEmpty,
+                  selectedColor: AppColors.primaryTeal,
+                  onTap: controller.clearCompanyFilter,
+                );
+              }
+              final comp = companies[index - 1];
+              return Padding(
+                padding: const EdgeInsetsDirectional.only(start: 8),
+                child: _companyChip(
+                  context,
+                  label: comp,
+                  selected: selectedCompany == comp,
+                  selectedColor: AppColors.secondaryTeal,
+                  onTap: () => controller.selectCompany(comp),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       }),
@@ -606,13 +575,13 @@ class _HomeViewState extends State<HomeView>
         style: TextStyle(
           fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
           fontWeight: FontWeight.w600,
-          color: selected ? Colors.white : AppColors.textDark,
+          color: selected ? AppColors.white : AppColors.textDark,
         ),
       ),
       selected: selected,
       showCheckmark: false,
       selectedColor: selectedColor,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       side: BorderSide(
         color: selected ? selectedColor : AppColors.borderGrey,
       ),
@@ -622,10 +591,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Products area (list on mobile, adaptive grid on tablet/desktop)
-  // ===========================================================================
-
+  // Product cards section
   Widget _buildProductsArea(BuildContext context, bool isMobile) {
     return ResponsiveCenteredBody(
       padding: EdgeInsets.zero,
@@ -671,7 +637,7 @@ class _HomeViewState extends State<HomeView>
             Container(
               padding: const EdgeInsets.all(26),
               decoration: BoxDecoration(
-                color: AppColors.primaryTeal.withOpacity(0.08),
+                color: AppColors.primaryTeal.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -701,7 +667,7 @@ class _HomeViewState extends State<HomeView>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryTeal,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -715,17 +681,14 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Product card
-  // ===========================================================================
-
+  // Product Card widget
   Widget _buildProductCard(BuildContext context, ProductModel item) {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 1.5,
-      color: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.black26,
+      color: AppColors.white,
+      surfaceTintColor: AppColors.transparent,
+      shadowColor: AppColors.black26,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -741,7 +704,6 @@ class _HomeViewState extends State<HomeView>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Name + company badge
                   Row(
                     children: [
                       Expanded(
@@ -766,7 +728,7 @@ class _HomeViewState extends State<HomeView>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryTeal.withOpacity(0.12),
+                            color: AppColors.primaryTeal.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -787,9 +749,8 @@ class _HomeViewState extends State<HomeView>
                       ),
                     ],
                   ),
-                  SizedBox(height: 10.0,),
+                  const SizedBox(height: 10.0),
 
-                  // Category + actions
                   Row(
                     children: [
                       const Icon(
@@ -800,7 +761,7 @@ class _HomeViewState extends State<HomeView>
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          'کیٹیگری: ${item.category}',
+                          '${AppStrings.categoryLabelPrefix}${item.category}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -828,13 +789,12 @@ class _HomeViewState extends State<HomeView>
                   ),
                   const SizedBox(height: 10),
 
-                  // Rates (customer rate highlighted)
                   Row(
                     children: [
                       Expanded(
                         child: _buildRateTile(
                           context,
-                          title: 'خرید/دوکاندار',
+                          title: AppStrings.purchaseRateAbbrev,
                           amount: item.purchaseRate,
                           unit: item.unit,
                           color: AppColors.primaryTeal,
@@ -844,7 +804,7 @@ class _HomeViewState extends State<HomeView>
                       Expanded(
                         child: _buildRateTile(
                           context,
-                          title: 'تھوک ریٹ',
+                          title: AppStrings.wholesaleRateAbbrev,
                           amount: item.wholesaleRate,
                           unit: item.unit,
                           color: AppColors.editBlue,
@@ -854,7 +814,7 @@ class _HomeViewState extends State<HomeView>
                       Expanded(
                         child: _buildRateTile(
                           context,
-                          title: 'گاہک ریٹ',
+                          title: AppStrings.customerRateAbbrev,
                           amount: item.customerRate,
                           unit: item.unit,
                           color: AppColors.successGreen,
@@ -867,7 +827,6 @@ class _HomeViewState extends State<HomeView>
               ),
             ),
 
-            // Accent bar on start (right) edge
             const PositionedDirectional(
               top: 0,
               bottom: 0,
@@ -890,7 +849,7 @@ class _HomeViewState extends State<HomeView>
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -912,8 +871,8 @@ class _HomeViewState extends State<HomeView>
     required Color color,
     bool filled = false,
   }) {
-    final Color titleColor = filled ? Colors.white : color;
-    final Color subColor = filled ? Colors.white70 : AppColors.textSecondary;
+    final Color titleColor = filled ? AppColors.white : color;
+    final Color subColor = filled ? AppColors.white70 : AppColors.textSecondary;
 
     Widget fit(Widget child) => FittedBox(
           fit: BoxFit.scaleDown,
@@ -925,10 +884,10 @@ class _HomeViewState extends State<HomeView>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: filled ? color : color.withOpacity(0.08),
+        color: filled ? color : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: filled ? color : color.withOpacity(0.25),
+          color: filled ? color : color.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -973,10 +932,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Bottom bar
-  // ===========================================================================
-
+  // Bottom action bar
   void _openAddProduct() {
     Get.to(
       () => AddEditProductView(
@@ -990,11 +946,11 @@ class _HomeViewState extends State<HomeView>
     return BottomAppBar(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(20.0),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Color(0x1A000000),
+              color: AppColors.shadowGrey,
               blurRadius: 12,
               offset: Offset(0, -3),
             ),
@@ -1019,7 +975,7 @@ class _HomeViewState extends State<HomeView>
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryTeal,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       elevation: 2,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -1066,26 +1022,21 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Backup & Restore Dialog
-  // ===========================================================================
-
+  // Backup dialog
   void _showBackupRestoreDialog(BuildContext context) {
-    final TextEditingController pasteController = TextEditingController();
-
     Get.dialog(
       Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
+          backgroundColor: AppColors.white,
+          surfaceTintColor: AppColors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           icon: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.primaryTeal.withOpacity(0.10),
+              color: AppColors.primaryTeal.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1095,7 +1046,7 @@ class _HomeViewState extends State<HomeView>
             ),
           ),
           title: Text(
-            'ڈیٹا بیک اپ اور ریسٹور (Backup & Restore)',
+            AppStrings.backupRestoreTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.bold,
@@ -1108,7 +1059,7 @@ class _HomeViewState extends State<HomeView>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'اپنے تمام ڈیٹا کی بیک اپ فائل محفوظ کریں یا دوسرے ڈیوائس سے بیک اپ فائل ریسٹور کریں۔',
+                  AppStrings.backupRestoreDescription,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
@@ -1117,17 +1068,14 @@ class _HomeViewState extends State<HomeView>
                 ),
                 const SizedBox(height: 18),
 
-                // Action 1: Export / Save Backup File
                 ElevatedButton.icon(
                   onPressed: () async {
                     final jsonString = controller.generateBackupJson();
-                    // Copy JSON text to clipboard
                     await Clipboard.setData(ClipboardData(text: jsonString));
 
-                    // Save file via FilePicker
                     try {
                       final String? outputFile = await FilePicker.platform.saveFile(
-                        dialogTitle: 'بیک اپ فائل محفوظ کریں',
+                        dialogTitle: AppStrings.backupSaveTitle,
                         fileName:
                             'ar_sons_backup_${DateTime.now().millisecondsSinceEpoch}.json',
                         type: FileType.custom,
@@ -1142,17 +1090,17 @@ class _HomeViewState extends State<HomeView>
 
                     Get.back();
                     Get.snackbar(
-                      'بیک اپ کامیاب',
-                      'ڈیٹا بیک اپ کلپ بورڈ اور فائل میں محفوظ کر دیا گیا ہے!',
+                      AppStrings.backupSuccessTitle,
+                      AppStrings.backupSuccessMessage,
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: AppColors.primaryTeal,
-                      colorText: Colors.white,
+                      colorText: AppColors.white,
                       margin: const EdgeInsets.all(12),
                     );
                   },
                   icon: const Icon(Icons.download_rounded),
                   label: Text(
-                    'ڈیٹا بیک اپ بنائیں (Export File)',
+                    AppStrings.backupExportButton,
                     style: TextStyle(
                       fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
                       fontWeight: FontWeight.bold,
@@ -1160,7 +1108,7 @@ class _HomeViewState extends State<HomeView>
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryTeal,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     minimumSize: const Size(double.infinity, 45),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1169,7 +1117,6 @@ class _HomeViewState extends State<HomeView>
                 ),
                 const SizedBox(height: 12),
 
-                // Action 2: Import / Pick Backup File
                 OutlinedButton.icon(
                   onPressed: () async {
                     try {
@@ -1187,20 +1134,20 @@ class _HomeViewState extends State<HomeView>
                         Get.back();
                         if (success) {
                           Get.snackbar(
-                            'ریسٹور کامیاب',
-                            'تمام ڈیٹا کامیابی سے ریسٹور ہو گیا ہے!',
+                            AppStrings.restoreSuccessTitle,
+                            AppStrings.restoreSuccessMessage,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppColors.successGreen,
-                            colorText: Colors.white,
+                            colorText: AppColors.white,
                             margin: const EdgeInsets.all(12),
                           );
                         } else {
                           Get.snackbar(
-                            'خرابی',
-                            'بیک اپ فائل پڑھنے میں ناکامی!',
+                            AppStrings.errorTitle,
+                            AppStrings.restoreFailedMessage,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppColors.deleteRed,
-                            colorText: Colors.white,
+                            colorText: AppColors.white,
                             margin: const EdgeInsets.all(12),
                           );
                         }
@@ -1210,7 +1157,7 @@ class _HomeViewState extends State<HomeView>
                   },
                   icon: const Icon(Icons.upload_file_rounded),
                   label: Text(
-                    'بیک اپ فائل منتخب کریں (Import File)',
+                    AppStrings.backupImportButton,
                     style: TextStyle(
                       fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
                       fontWeight: FontWeight.bold,
@@ -1225,76 +1172,6 @@ class _HomeViewState extends State<HomeView>
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-
-                /*const Divider(),
-                const SizedBox(height: 8),
-
-                // Action 3: Paste Backup Code Input
-                Text(
-                  'یا کلپ بورڈ سے بیک اپ ٹیکسٹ پیسٹ کر کے ریسٹور کریں:',
-                  style: TextStyle(
-                    fontSize: Responsive.fontSize(context, 12, desktopSize: 15),
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: pasteController,
-                  maxLines: 3,
-                  style: const TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    hintText: 'بیک اپ کا JSON کوڈ یہاں پیسٹ کریں...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    contentPadding: const EdgeInsets.all(10),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    final text = pasteController.text.trim();
-                    if (text.isNotEmpty) {
-                      final success = controller.restoreFromBackupJson(text);
-                      Get.back();
-                      if (success) {
-                        Get.snackbar(
-                          'ریسٹور کامیاب',
-                          'ڈیٹا کلپ بورڈ ٹیکسٹ سے کامیابی سے ریسٹور ہو گیا!',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.successGreen,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(12),
-                        );
-                      } else {
-                        Get.snackbar(
-                          'خرابی',
-                          'غیر موزوں بیک اپ کوڈ!',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.deleteRed,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(12),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondaryTeal,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    'ٹیکسٹ سے ریسٹور کریں (Restore from Text)',
-                    style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),*/
               ],
             ),
           ),
@@ -1315,24 +1192,21 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // ===========================================================================
-  // Delete dialog
-  // ===========================================================================
-
+  // Delete product dialog
   void _showDeleteConfirmationDialog(BuildContext context, ProductModel item) {
     Get.dialog(
       Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
+          backgroundColor: AppColors.white,
+          surfaceTintColor: AppColors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           icon: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.deleteRed.withOpacity(0.10),
+              color: AppColors.deleteRed.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -1405,13 +1279,13 @@ class _HomeViewState extends State<HomeView>
                   AppStrings.itemDeletedSuccess,
                   snackPosition: SnackPosition.BOTTOM,
                   backgroundColor: AppColors.deleteRed,
-                  colorText: Colors.white,
+                  colorText: AppColors.white,
                   margin: const EdgeInsets.all(12),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.deleteRed,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(

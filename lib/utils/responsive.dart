@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../exports.dart';
 
-/// Utility class for responsive layout breakpoints, font scaling, and helper widgets
+// Responsive helper class for layout breakpoints and text scaling
 class Responsive extends StatelessWidget {
   final Widget mobile;
   final Widget? tablet;
@@ -13,10 +14,10 @@ class Responsive extends StatelessWidget {
     required this.desktop,
   });
 
-  /// Breakpoint definitions
-  static const double mobileMax = 600;
-  static const double tabletMax = 1000;
-  static const double maxContentWidth = 1200;
+  // Screen breakpoints
+  static const double mobileMax = AppConstants.mobileMax;
+  static const double tabletMax = AppConstants.tabletMax;
+  static const double maxContentWidth = AppConstants.maxContentWidth;
 
   static bool isMobile(BuildContext context) =>
       MediaQuery.sizeOf(context).width < mobileMax;
@@ -28,7 +29,7 @@ class Responsive extends StatelessWidget {
   static bool isDesktop(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= tabletMax;
 
-  /// Dynamically computes scaled font size for desktop/windows vs mobile
+  // Font scaling helper
   static double fontSize(BuildContext context, double mobileSize, {double? desktopSize}) {
     final double width = MediaQuery.sizeOf(context).width;
     if (width >= tabletMax) {
@@ -39,7 +40,7 @@ class Responsive extends StatelessWidget {
     return mobileSize;
   }
 
-  /// Returns grid cross axis count dynamically based on current width
+  // Dynamic grid column count
   static int getGridCrossAxisCount(BuildContext context, {double targetTileWidth = 380}) {
     final width = MediaQuery.sizeOf(context).width;
     if (width < mobileMax) return 1;
@@ -47,7 +48,7 @@ class Responsive extends StatelessWidget {
     return count < 1 ? 1 : count;
   }
 
-  /// Calculates max item width for constrained centered containers
+  // Padding helper
   static double getContentPadding(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (width > maxContentWidth) {
@@ -70,7 +71,7 @@ class Responsive extends StatelessWidget {
   }
 }
 
-/// Helper wrapper to center and constrain content for desktop screens
+// Centered body wrapper for wide screens
 class ResponsiveCenteredBody extends StatelessWidget {
   final Widget child;
   final double maxWidth;

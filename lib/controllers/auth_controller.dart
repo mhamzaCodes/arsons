@@ -1,25 +1,23 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import '../models/user_model.dart';
-import '../views/home_view.dart';
-import '../views/login_view.dart';
+import '../exports.dart';
 
-/// GetX Controller for User Authentication, Local Storage Persistence & Profile Management
+// User authentication and session controller
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
 
   final GetStorage _storage = GetStorage();
 
-  // Storage Keys
-  static const String keyUsersList = 'ar_sons_registered_users_v1';
-  static const String keyCurrentUser = 'ar_sons_current_user_v1';
-  static const String keyIsLoggedIn = 'ar_sons_is_logged_in_v1';
+  // Storage keys
+  static const String keyUsersList = AppConstants.storageKeyUsersList;
+  static const String keyCurrentUser = AppConstants.storageKeyCurrentUser;
+  static const String keyIsLoggedIn = AppConstants.storageKeyIsLoggedIn;
 
-  // Observable User Session State
+  // Session state
   final Rxn<UserModel> rxCurrentUser = Rxn<UserModel>();
   final RxBool isLoggedIn = false.obs;
 
-  // Observable Registered Users List
+  // Registered users list
   final RxList<UserModel> registeredUsers = <UserModel>[].obs;
 
   @override
@@ -28,7 +26,7 @@ class AuthController extends GetxController {
     loadSessionAndUsers();
   }
 
-  /// Load registered users and active session state from GetStorage
+  // Load registered users and active session from storage
   void loadSessionAndUsers() {
     try {
       final List<dynamic>? storedUsers = _storage.read<List<dynamic>>(keyUsersList);
@@ -37,12 +35,12 @@ class AuthController extends GetxController {
             .map((item) => UserModel.fromMap(Map<String, dynamic>.from(item)))
             .toList();
       } else {
-        // Seed initial admin/default user if list is empty
+        // Default admin user if list is empty
         final defaultUser = UserModel(
-          id: 'user_default_1',
-          name: 'محمد حماد',
-          phone: '03001727174',
-          password: '123456',
+          id: AppConstants.defaultUserId,
+          name: AppConstants.defaultUserName,
+          phone: AppConstants.defaultUserPhone,
+          password: AppConstants.defaultUserPassword,
         );
         registeredUsers.value = [defaultUser];
         _saveUsersList();
@@ -54,7 +52,6 @@ class AuthController extends GetxController {
 
       if (loggedInFlag && userMap != null) {
         final sessionUser = UserModel.fromMap(Map<String, dynamic>.from(userMap));
-        // Verify user still exists in registered list
         final int index = registeredUsers.indexWhere((u) => u.id == sessionUser.id || u.phone == sessionUser.phone);
         if (index != -1) {
           rxCurrentUser.value = registeredUsers[index];
@@ -70,14 +67,14 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Save registered users list to GetStorage
+  // Save users list to storage
   void _saveUsersList() {
     final List<Map<String, dynamic>> data =
         registeredUsers.map((u) => u.toMap()).toList();
     _storage.write(keyUsersList, data);
   }
 
-  /// Save current active user session to GetStorage
+  // Save active user session
   void _saveSession(UserModel user) {
     rxCurrentUser.value = user;
     isLoggedIn.value = true;
@@ -85,7 +82,7 @@ class AuthController extends GetxController {
     _storage.write(keyIsLoggedIn, true);
   }
 
-  /// Clear active session from GetStorage
+  // Clear active user session
   void _clearSession() {
     rxCurrentUser.value = null;
     isLoggedIn.value = false;
@@ -93,9 +90,7 @@ class AuthController extends GetxController {
     _storage.write(keyIsLoggedIn, false);
   }
 
-  // --- Auth Actions ---
-
-  /// Login user with phone number and password
+  // Login with phone and password
   bool loginUser({required String phone, required String password}) {
     final cleanPhone = phone.trim();
     final cleanPassword = password.trim();
@@ -113,7 +108,7 @@ class AuthController extends GetxController {
     return false;
   }
 
-  /// Register a new user with name, phone, and password
+  // Register a new user
   bool registerUser({
     required String name,
     required String phone,
@@ -123,7 +118,6 @@ class AuthController extends GetxController {
     final cleanName = name.trim();
     final cleanPassword = password.trim();
 
-    // Check if phone number already registered
     final bool phoneExists = registeredUsers.any((u) => u.phone.trim() == cleanPhone);
     if (phoneExists) {
       return false;
@@ -144,7 +138,7 @@ class AuthController extends GetxController {
     return true;
   }
 
-  /// Update profile details (Name, Phone, and optional new password)
+  // Update profile details
   bool updateProfile({
     required String name,
     required String phone,
@@ -157,7 +151,6 @@ class AuthController extends GetxController {
     final cleanName = name.trim();
     final cleanPhone = phone.trim();
 
-    // Check if phone number changed and if new phone already taken by another user
     if (cleanPhone != currentUser.phone) {
       final bool phoneTaken = registeredUsers.any(
         (u) => u.phone.trim() == cleanPhone && u.id != currentUser.id,
@@ -169,10 +162,9 @@ class AuthController extends GetxController {
 
     String updatedPassword = currentUser.password;
 
-    // Handle password change if newPassword provided
     if (newPassword != null && newPassword.trim().isNotEmpty) {
       if (currentPassword == null || currentPassword.trim() != currentUser.password) {
-        return false; // Invalid current password
+        return false;
       }
       updatedPassword = newPassword.trim();
     }
@@ -183,7 +175,6 @@ class AuthController extends GetxController {
       password: updatedPassword,
     );
 
-    // Update in registeredUsers list
     final int index = registeredUsers.indexWhere((u) => u.id == currentUser.id);
     if (index != -1) {
       registeredUsers[index] = updatedUser;
@@ -196,7 +187,7 @@ class AuthController extends GetxController {
     return true;
   }
 
-  /// Logout current user and redirect to LoginView
+  // Logout current user
   void logout() {
     _clearSession();
     Get.offAll(() => const LoginView());

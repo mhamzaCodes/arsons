@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../constants/colors.dart';
-import '../constants/strings.dart';
-import '../controllers/inventory_controller.dart';
-import '../models/product_model.dart';
-import '../utils/responsive.dart';
-import 'add_edit_product_view.dart';
+import '../exports.dart';
 
-/// Screen listing products for a specific company or category with Scaled Desktop Text
+// View displaying product items list
 class ProductListView extends StatelessWidget {
   final String categoryName;
   final String? companyName;
@@ -35,12 +30,12 @@ class ProductListView extends StatelessWidget {
                 ? '$categoryName ($companyName)'
                 : categoryName,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontWeight: FontWeight.bold,
               fontSize: Responsive.fontSize(context, 18, desktopSize: 22),
             ),
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: AppColors.white),
           actions: [
             IconButton(
               icon: const Icon(Icons.add, size: 28),
@@ -51,11 +46,33 @@ class ProductListView extends StatelessWidget {
                     ));
               },
             ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: AppColors.white),
+              onSelected: (value) {
+                if (value == 'delete_all') {
+                  _showDeleteAllConfirmationDialog(context, controller);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete_all',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_sweep, color: AppColors.deleteRed),
+                      SizedBox(width: 8),
+                      Text(
+                        AppStrings.deleteAllItems,
+                        style: TextStyle(color: AppColors.deleteRed, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         body: Column(
           children: [
-            // Search Bar Header
             Container(
               color: AppColors.primaryTeal,
               padding: const EdgeInsets.all(12),
@@ -73,7 +90,7 @@ class ProductListView extends StatelessWidget {
                       fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
                     ),
                     prefixIcon: const Icon(Icons.search, color: AppColors.primaryTeal),
-                    fillColor: Colors.white,
+                    fillColor: AppColors.white,
                     filled: true,
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 12,
@@ -88,7 +105,6 @@ class ProductListView extends StatelessWidget {
               ),
             ),
 
-            // Product List Display
             Expanded(
               child: ResponsiveCenteredBody(
                 padding: const EdgeInsets.all(12),
@@ -144,7 +160,7 @@ class ProductListView extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryTeal,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.white,
                             ),
                           ),
                         ],
@@ -188,7 +204,7 @@ class ProductListView extends StatelessWidget {
                 ));
           },
           backgroundColor: AppColors.primaryTeal,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
           icon: const Icon(Icons.add),
           label: Text(
             AppStrings.addNewItem,
@@ -220,7 +236,6 @@ class ProductListView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Item Header with Title & Company Badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -258,7 +273,6 @@ class ProductListView extends StatelessWidget {
             ),
             const Divider(height: 16),
 
-            // Rates Grid
             Row(
               children: [
                 Expanded(
@@ -294,7 +308,6 @@ class ProductListView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Edit & Delete Action Row
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -445,13 +458,85 @@ class ProductListView extends StatelessWidget {
                   AppStrings.itemDeletedSuccess,
                   snackPosition: SnackPosition.BOTTOM,
                   backgroundColor: AppColors.deleteRed,
-                  colorText: Colors.white,
+                  colorText: AppColors.white,
                   margin: const EdgeInsets.all(12),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.deleteRed,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
+              ),
+              child: Text(
+                AppStrings.deleteItem,
+                style: TextStyle(
+                  fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAllConfirmationDialog(
+    BuildContext context,
+    InventoryController controller,
+  ) {
+    Get.dialog(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            AppStrings.deleteAllCategoryConfirmTitle,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Responsive.fontSize(context, 18, desktopSize: 22),
+              color: AppColors.deleteRed,
+            ),
+          ),
+          content: Text(
+            companyName != null && companyName!.isNotEmpty
+                ? AppStrings.deleteAllCompanyMessage(categoryName, companyName!)
+                : AppStrings.deleteAllCategoryMessage(categoryName),
+            style: TextStyle(
+              fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                AppStrings.cancel,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (companyName != null && companyName!.isNotEmpty) {
+                  controller.deleteAllItemsForCompany(categoryName, companyName!);
+                } else {
+                  controller.deleteAllItemsForCategory(categoryName);
+                }
+                Get.back();
+                Get.snackbar(
+                  AppStrings.deletedTitle,
+                  AppStrings.deleteAllSuccessMessage,
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: AppColors.deleteRed,
+                  colorText: AppColors.white,
+                  margin: const EdgeInsets.all(12),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.deleteRed,
+                foregroundColor: AppColors.white,
               ),
               child: Text(
                 AppStrings.deleteItem,

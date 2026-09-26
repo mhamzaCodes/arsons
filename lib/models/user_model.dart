@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Model representing a User account
+// User account model
 class UserModel {
   final String id;
   final String name;
@@ -16,7 +16,7 @@ class UserModel {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  /// Create a copy with modified fields
+  // Create copy with modified fields
   UserModel copyWith({
     String? id,
     String? name,
@@ -33,7 +33,7 @@ class UserModel {
     );
   }
 
-  /// Convert UserModel to Map for storage
+  // Convert model to Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -44,7 +44,7 @@ class UserModel {
     };
   }
 
-  /// Create UserModel from Map
+  // Create model from Map
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'] ?? '',
@@ -57,10 +57,9 @@ class UserModel {
     );
   }
 
-  /// Serialize to JSON string
+  // JSON helpers
   String toJson() => jsonEncode(toMap());
 
-  /// Deserialize from JSON string
   factory UserModel.fromJson(String source) =>
       UserModel.fromMap(jsonDecode(source));
 }

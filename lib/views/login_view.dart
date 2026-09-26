@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../constants/colors.dart';
-import '../constants/strings.dart';
-import '../controllers/auth_controller.dart';
-import '../utils/responsive.dart';
-import 'register_view.dart';
+import '../exports.dart';
 
-/// Screen for User Login using Phone Number and Password
+// User login view
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -41,20 +37,20 @@ class _LoginViewState extends State<LoginView> {
 
     if (success) {
       Get.snackbar(
-        'خوش آمدید',
+        AppStrings.welcomeTitle,
         AppStrings.loginSuccess,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.successGreen,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     } else {
       Get.snackbar(
-        'لاگ ان ناکام',
+        AppStrings.loginFailedTitle,
         AppStrings.invalidCredentials,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.deleteRed,
-        colorText: Colors.white,
+        colorText: AppColors.white,
         margin: const EdgeInsets.all(12),
       );
     }
@@ -80,9 +76,6 @@ class _LoginViewState extends State<LoginView> {
                       const SizedBox(height: 24),
                       _buildLoginForm(context),
                       const SizedBox(height: 16),
-                      // _buildRegisterLink(context),
-                      // const SizedBox(height: 20),
-                      // _buildDefaultCredentialsHint(context),
                     ],
                   ),
                 ),
@@ -107,7 +100,7 @@ class _LoginViewState extends State<LoginView> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x29000000),
+            color: AppColors.shadowDark,
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -120,11 +113,11 @@ class _LoginViewState extends State<LoginView> {
             height: 70,
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x33000000),
+                  color: AppColors.shadowDeep,
                   blurRadius: 8,
                   offset: Offset(0, 3),
                 ),
@@ -133,7 +126,7 @@ class _LoginViewState extends State<LoginView> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(17),
               child: Image.asset(
-                'assets/icon.jpg',
+                AppConstants.appIconPath,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stack) => const Icon(
                   Icons.storefront_rounded,
@@ -148,7 +141,7 @@ class _LoginViewState extends State<LoginView> {
             AppStrings.appTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontWeight: FontWeight.bold,
               fontSize: Responsive.fontSize(context, 20, desktopSize: 24),
             ),
@@ -158,7 +151,7 @@ class _LoginViewState extends State<LoginView> {
             AppStrings.appSubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white70,
+              color: AppColors.white70,
               fontSize: Responsive.fontSize(context, 13, desktopSize: 16),
             ),
           ),
@@ -171,12 +164,12 @@ class _LoginViewState extends State<LoginView> {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.borderGrey),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
+            color: AppColors.shadowSoft,
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -310,7 +303,7 @@ class _LoginViewState extends State<LoginView> {
             ),
             const SizedBox(height: 24),
 
-            // Submit Login Button
+            // Submit Button
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -326,7 +319,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryTeal,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.white,
                   elevation: 3,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -336,60 +329,6 @@ class _LoginViewState extends State<LoginView> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRegisterLink(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'اکاؤنٹ موجود نہیں ہے؟ ',
-          style: TextStyle(
-            fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-            color: AppColors.textSecondary,
-          ),
-        ),
-        GestureDetector(
-          onTap: () => Get.to(() => const RegisterView()),
-          child: Text(
-            AppStrings.noAccountPrompt,
-            style: TextStyle(
-              fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryTeal,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDefaultCredentialsHint(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.goldAccent.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.goldAccent),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: AppColors.primaryTealDark, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'ڈیفالٹ لاگ ان: فون 03001727174 | پاس ورڈ 123456',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 12, desktopSize: 15),
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryTealDark,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
