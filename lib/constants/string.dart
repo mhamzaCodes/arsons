@@ -18,6 +18,41 @@ class AppStrings {
   static const String companiesTitle = 'کمپنیاں';
   static const String itemsTitle = 'آئٹمز';
   static const String rateListTitle = 'ریٹ لسٹ';
+  static const String ordersTitle = 'Orders';
+
+  // Order Booking System (English)
+  static const String orderBookingTitle = 'Order Booking System';
+  static const String createNewOrder = 'Create New Order';
+  static const String editOrder = 'Edit Order';
+  static const String deleteOrder = 'Delete Order';
+  static const String orderDetails = 'Order Details';
+  static const String customerNameLabel = 'Customer / Shop Name';
+  static const String customerNameHint = 'e.g. Asghar Hardware and sentry store Narang Mandi';
+  static const String mobileLabel = 'Mobile Number';
+  static const String mobileHint = 'e.g. 03004685524';
+  static const String subtitleLabel = 'Subtitle / Category Tagline';
+  static const String subtitleHint = 'e.g. UPVC PPRC PIPES & FITTINGS';
+  static const String orderTitleLabel = 'Order Title / Brand Name';
+  static const String orderTitleHint = 'e.g. POLO clear';
+  static const String orderDateLabel = 'Date';
+  static const String orderDateHint = 'e.g. 02/02/26';
+  static const String orderItemsSection = 'Order Items';
+  static const String addItemRow = 'Add Item';
+  static const String sizeColumnLabel = 'Size / Description';
+  static const String gramColumnLabel = 'Gram (Weight)';
+  static const String pipesColumnLabel = 'Pipes (Quantity)';
+  static const String srNoHeader = 'Sr#';
+  static const String saveOrderButton = 'Save Order';
+  static const String updateOrderButton = 'Update Order';
+  static const String viewPdfButton = 'View / Print PDF';
+  static const String regeneratePdfButton = 'Regenerate PDF';
+  static const String searchOrdersHint = 'Search orders by customer, title or mobile...';
+  static const String noOrdersFound = 'No orders found. Click + to create one!';
+  static const String deleteOrderConfirmTitle = 'Delete Order';
+  static const String deleteOrderConfirmMessage = 'Are you sure you want to delete this order?';
+  static const String orderSavedSuccess = 'Order saved successfully!';
+  static const String orderUpdatedSuccess = 'Order updated successfully!';
+  static const String orderDeletedSuccess = 'Order deleted successfully!';
 
   // Statistics
   static const String totalProducts = 'کل آئٹمز';
@@ -66,7 +101,7 @@ class AppStrings {
   static const String categoryLabel = 'کیٹیگری منتخب کریں';
   static const String companyLabel = 'کمپنی کا نام';
   static const String companyHint = 'مثلاً: ماسٹر، فیصل، فاران، پاپولر';
-  static const String purchaseRateLabel = 'دوکاندار/خرید ریٹ (روپے)';
+  static const String purchaseRateLabel = 'خرید ریٹ (روپے)';
   static const String purchaseRateHint = '0.00';
   static const String wholesaleRateLabel = 'تھوک ریٹ (روپے)';
   static const String wholesaleRateHint = '0.00';
@@ -79,7 +114,7 @@ class AppStrings {
 
   // Rate labels
   static const String ratesSectionTitle = 'ریٹس کا اندراج (قیمت فی یونٹ)';
-  static const String purchaseRateAbbrev = 'خرید/دوکاندار';
+  static const String purchaseRateAbbrev = 'خرید';
   static const String wholesaleRateAbbrev = 'تھوک ریٹ';
   static const String customerRateAbbrev = 'گاہک ریٹ';
 
@@ -102,8 +137,7 @@ class AppStrings {
   static const String pdfColumnNo = '#';
   static const String pdfColumnItem = 'آئٹم کا نام';
   static const String pdfColumnCategory = 'کیٹیگری';
-  static const String pdfColumnCompany = 'کمپنی';
-  static const String pdfColumnPurchase = 'خرید/دوکاندار';
+  static const String pdfColumnPurchase = 'خرید';
   static const String pdfColumnWholesale = 'تھوک نرخ';
   static const String pdfColumnCustomer = 'گاہک نرخ';
   static const String pdfTotalItems = 'کل آئٹمز:';
@@ -112,6 +146,10 @@ class AppStrings {
   static const String pdfErrorText = 'PDF تیار کرنے میں خرابی';
   static const String pdfCompanyPrefix = 'کمپنی: ';
   static const String pdfContinuedSuffix = ' (جاری)';
+  static const String selectPdfOptionTitle = 'PDF ریٹ لسٹ کا انتخاب';
+  static const String selectPdfOptionPrompt = 'کیا آپ PDF میں خرید نرخ شامل کرنا چاہتے ہیں؟';
+  static const String withPurchaseRate = 'باخرید نرخ (خرید کے ساتھ)';
+  static const String withoutPurchaseRate = 'بغیر خرید نرخ (خرید کے بغیر)';
 
   // Notifications
   static const String itemAddedSuccess = 'آئٹم کاملاِ کامیابی سے شامل ہو گیا!';

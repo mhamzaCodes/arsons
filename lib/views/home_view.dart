@@ -273,7 +273,15 @@ class _HomeViewState extends State<HomeView>
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => Get.to(() => const PdfPreviewView()),
+          onTap: () async {
+            final includePurchase =
+                await PdfPreviewView.showOptionsDialog(context);
+            if (includePurchase != null) {
+              Get.to(
+                () => PdfPreviewView(includePurchaseRate: includePurchase),
+              );
+            }
+          },
           child: const Padding(
             padding: EdgeInsets.all(11),
             child: Icon(
@@ -969,7 +977,7 @@ class _HomeViewState extends State<HomeView>
                     label: Text(
                       AppStrings.addNewItem,
                       style: TextStyle(
-                        fontSize: Responsive.fontSize(context, 16, desktopSize: 19),
+                        fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -984,7 +992,31 @@ class _HomeViewState extends State<HomeView>
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Get.to(() => const OrdersView());
+                  },
+                  icon: const Icon(Icons.receipt_long_rounded),
+                  label: Text(
+                    AppStrings.ordersTitle,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.goldAccent,
+                    foregroundColor: AppColors.primaryTealDark,
+                    elevation: 2,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () {
                     Get.to(
@@ -998,7 +1030,7 @@ class _HomeViewState extends State<HomeView>
                     AppStrings.companiesTitle,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: Responsive.fontSize(context, 15, desktopSize: 18),
+                      fontSize: Responsive.fontSize(context, 14, desktopSize: 17),
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -1008,7 +1040,7 @@ class _HomeViewState extends State<HomeView>
                       width: 1.5,
                     ),
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

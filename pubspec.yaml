@@ -21,6 +21,8 @@ dependencies:
   google_fonts: ^6.2.1
   arabic_reshaper: ^0.0.1
   file_picker: ^8.1.7
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:

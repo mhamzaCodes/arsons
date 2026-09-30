@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf/pdf.dart';
 import 'package:arsons/models/product_model.dart';
 import 'package:arsons/utils/pdf_generator.dart';
 
@@ -27,8 +26,18 @@ void main() {
       ),
     );
 
-    final bytes = await PdfGenerator.generateRateListPdf(products);
-    expect(bytes, isNotEmpty);
-    expect(bytes.length, greaterThan(1000));
+    final bytesWithPurchase = await PdfGenerator.generateRateListPdf(
+      products,
+      includePurchaseRate: true,
+    );
+    expect(bytesWithPurchase, isNotEmpty);
+    expect(bytesWithPurchase.length, greaterThan(1000));
+
+    final bytesWithoutPurchase = await PdfGenerator.generateRateListPdf(
+      products,
+      includePurchaseRate: false,
+    );
+    expect(bytesWithoutPurchase, isNotEmpty);
+    expect(bytesWithoutPurchase.length, greaterThan(1000));
   });
 }

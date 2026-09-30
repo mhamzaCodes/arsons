@@ -79,6 +79,7 @@ class PdfGenerator {
         PdfPageFormat? pageFormat,
         bool useNastaleeq = true,
         String nastaleeqFamily = _defaultNastaleeqFamily,
+        bool includePurchaseRate = true,
       }) async {
     final fonts = await _loadVectorFonts(preferBundled: useNastaleeq);
 
@@ -93,6 +94,7 @@ class PdfGenerator {
       products: products,
       engine: engine,
       theme: pw.ThemeData.withFont(base: fonts.$1, bold: fonts.$2),
+      includePurchaseRate: includePurchaseRate,
     );
 
     engine.recording = true;
@@ -324,16 +326,19 @@ class _RateListBuilder {
     required this.products,
     required this.engine,
     required this.theme,
+    this.includePurchaseRate = true,
   });
 
   final List<ProductModel> products;
   final _TextEngine engine;
   final pw.ThemeData theme;
+  final bool includePurchaseRate;
 
   List<pw.Page> buildPages() {
     final grouped = <String, List<ProductModel>>{};
     for (final p in products) {
-      grouped.putIfAbsent(p.company, () => <ProductModel>[]).add(p);
+      final comp = p.company.trim().isNotEmpty ? p.company.trim() : 'عام';
+      grouped.putIfAbsent(comp, () => <ProductModel>[]).add(p);
     }
     final companies = grouped.keys.toList()..sort();
 
@@ -418,7 +423,7 @@ class _RateListBuilder {
     const double innerH = _headerH - 12;
 
     final left = pw.SizedBox(
-      width: 130,
+      width: 125,
       height: innerH,
       child: pw.FittedBox(
         fit: pw.BoxFit.scaleDown,
@@ -454,7 +459,7 @@ class _RateListBuilder {
     );
 
     final center = pw.SizedBox(
-      width: 254,
+      width: 214,
       height: innerH,
       child: pw.FittedBox(
         fit: pw.BoxFit.scaleDown,
@@ -498,7 +503,7 @@ class _RateListBuilder {
     );
 
     final right = pw.SizedBox(
-      width: 150,
+      width: 170,
       height: innerH,
       child: pw.FittedBox(
         fit: pw.BoxFit.scaleDown,
@@ -507,28 +512,49 @@ class _RateListBuilder {
           mainAxisSize: pw.MainAxisSize.min,
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            engine.text(
-              '${AppStrings.ceoLabel} ${AppStrings.ceoName}',
-              size: 10,
-              color: PdfColors.white,
-              bold: true,
+            pw.Row(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                engine.text(
+                  AppStrings.ceoName,
+                  size: 12,
+                  color: PdfColors.white,
+                  bold: true,
+                ),
+                pw.SizedBox(width: 8),
+                engine.text(
+                  AppStrings.ceoLabel,
+                  size: 11,
+                  color: PdfColors.white,
+                  bold: true,
+                ),
+              ],
             ),
-            engine.text(
-              '${AppStrings.proprietorLabel} ${AppStrings.proprietorName}',
-              size: 10,
-              color: _Palette.softWhite,
+            pw.SizedBox(height: 2),
+            pw.Row(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                engine.text(
+                  AppStrings.proprietorName,
+                  size: 12,
+                  color: PdfColors.white,
+                  bold: true,
+                ),
+                pw.SizedBox(width: 8),
+                engine.text(
+                  AppStrings.proprietorLabel,
+                  size: 11,
+                  color: PdfColors.white,
+                ),
+              ],
             ),
             pw.SizedBox(height: 3),
-            pw.Container(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-              decoration: pw.BoxDecoration(
-                color: _Palette.gold,
-                borderRadius: pw.BorderRadius.circular(8),
-              ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(right: 60),
               child: engine.number(
                 AppStrings.phoneNumber,
-                size: 10.5,
-                color: _Palette.navy,
+                size: 10,
+                color: PdfColors.white,
               ),
             ),
           ],
@@ -656,6 +682,8 @@ class _RateListBuilder {
       ),
     );
 
+    final nameWidth = includePurchaseRate ? _nameW : (_nameW + _rateW);
+
     return pw.Container(
       width: _tableWidth,
       height: _headH,
@@ -664,8 +692,8 @@ class _RateListBuilder {
         children: [
           h('گاہک', _rateW, divider: false),
           h('تھوک', _rateW),
-          h('خرید', _rateW),
-          h('آئٹم', _nameW),
+          if (includePurchaseRate) h('خرید', _rateW),
+          h('آئٹم', nameWidth),
           h('نمبر شمار', _noW),
         ],
       ),
@@ -674,8 +702,8 @@ class _RateListBuilder {
 
   pw.Widget _companyRow(CompanyHeaderEntry entry) {
     final label = entry.continued
-        ? '${AppStrings.pdfCompanyPrefix}${entry.companyName}${AppStrings.pdfContinuedSuffix}'
-        : '${AppStrings.pdfCompanyPrefix}${entry.companyName}';
+        ? '${entry.companyName}${AppStrings.pdfContinuedSuffix}'
+        : entry.companyName;
     const side = pw.BorderSide(color: _Palette.line, width: 0.6);
 
     return pw.Container(
@@ -706,6 +734,7 @@ class _RateListBuilder {
   pw.Widget _productRow(ProductItemEntry entry, {required bool shaded}) {
     final p = entry.product;
     const side = pw.BorderSide(color: _Palette.line, width: 0.6);
+    final nameWidth = includePurchaseRate ? _nameW : (_nameW + _rateW);
 
     pw.Widget rate(
         num value, {
@@ -732,9 +761,9 @@ class _RateListBuilder {
         children: [
           rate(p.customerRate, color: _Palette.navy, first: true),
           rate(p.wholesaleRate),
-          rate(p.purchaseRate),
+          if (includePurchaseRate) rate(p.purchaseRate),
           _cell(
-            width: _nameW,
+            width: nameWidth,
             height: _rowH,
             alignment: pw.Alignment.centerRight,
             divider: _Palette.line,
