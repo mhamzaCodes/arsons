@@ -13,7 +13,7 @@ class OrderPdfGenerator {
     // Try loading background image from assets
     pw.MemoryImage? bgImage;
     try {
-      final imageBytes = await rootBundle.load('assets/pipes.jpg');
+      final imageBytes = await rootBundle.load('assets/pipes.png');
       bgImage = pw.MemoryImage(imageBytes.buffer.asUint8List());
     } catch (_) {
       try {
@@ -44,7 +44,7 @@ class OrderPdfGenerator {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(16),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         build: (pw.Context context) {
           return pw.Stack(
             children: [
@@ -70,13 +70,13 @@ class OrderPdfGenerator {
                   ),
                 ),
 
-              // Awesome Outer Framed Border wrapping the page content
+              // Framed Border wrapping the page content
               pw.Container(
                 padding: const pw.EdgeInsets.all(14),
                 decoration: pw.BoxDecoration(
                   border: pw.Border.all(
                     color: PdfColor.fromInt(0xFF005F73), // Primary Teal Frame
-                    width: 2.5,
+                    width: 2.0,
                   ),
                   borderRadius: const pw.BorderRadius.all(
                     pw.Radius.circular(8),
@@ -85,47 +85,45 @@ class OrderPdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                   children: [
-                    // 1. Top Header Row (AR Sons Banner + Owner Box & Mobile below)
+                    // 1. Top Header Row (AR Sons + Owner on Left | Mobile at Right End)
                     pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        // AR Sons Primary Banner Box
-                        pw.Container(
-                          width: 200,
-                          height: 52,
-                          padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: pw.BoxDecoration(
-                            color: PdfColor.fromInt(0xFF005F73), // Primary Teal
-                            borderRadius: const pw.BorderRadius.all(
-                              pw.Radius.circular(6),
-                            ),
-                          ),
-                          child: pw.Center(
-                            child: pw.Text(
-                              AppStrings.appName,
-                              style: pw.TextStyle(
-                                font: fontBold,
-                                fontSize: 30,
-                                color: PdfColors.white,
-                                letterSpacing: 1.2,
+                        // Left Group: AR Sons Banner Box + Owner Tag beside it
+                        pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.center,
+                          children: [
+                            // AR Sons Primary Banner Box
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: pw.BoxDecoration(
+                                color: PdfColor.fromInt(0xFF005F73), // Primary Teal
+                                borderRadius: const pw.BorderRadius.all(
+                                  pw.Radius.circular(6),
+                                ),
+                              ),
+                              child: pw.Text(
+                                AppStrings.appName,
+                                style: pw.TextStyle(
+                                  font: fontBold,
+                                  fontSize: 24,
+                                  color: PdfColors.white,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
 
-                        // Right side: Owner Box at Top Right & Mobile directly below
-                        pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.end,
-                          children: [
-                            // Owner Box
+                            pw.SizedBox(width: 12),
+
+                            // Owner Tag Box (Increased font size)
                             pw.Container(
                               padding: const pw.EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 4,
+                                vertical: 5,
                               ),
                               decoration: pw.BoxDecoration(
                                 color: PdfColor.fromInt(0xFFE2E8F0),
@@ -137,45 +135,45 @@ class OrderPdfGenerator {
                                 '${AppStrings.ownerLabelEnglish}${AppStrings.ownerNameEnglish}',
                                 style: pw.TextStyle(
                                   font: fontBold,
-                                  fontSize: 13,
+                                  fontSize: 14, // Larger font size
                                   color: PdfColor.fromInt(0xFF005F73),
                                 ),
                               ),
                             ),
-                            pw.SizedBox(height: 5),
-                            // Mobile Number below Owner Box
-                            pw.Row(
-                              mainAxisSize: pw.MainAxisSize.min,
-                              children: [
-                                pw.Text(
-                                  AppStrings.mobilePrefix,
-                                  style: pw.TextStyle(
-                                    font: fontBold,
-                                    fontSize: 13,
-                                    color: PdfColors.black,
-                                  ),
-                                ),
-                                pw.Text(
-                                  mobileText,
-                                  style: pw.TextStyle(
-                                    font: fontBold,
-                                    fontSize: 15,
-                                    color: PdfColor.fromInt(0xFF005F73),
-                                  ),
-                                ),
-                              ],
+                          ],
+                        ),
+
+                        // Right End: Mobile Number
+                        pw.Row(
+                          mainAxisSize: pw.MainAxisSize.min,
+                          children: [
+                            pw.Text(
+                              AppStrings.mobilePrefix,
+                              style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: 13,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                            pw.Text(
+                              mobileText,
+                              style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: 15,
+                                color: PdfColor.fromInt(0xFF005F73),
+                              ),
                             ),
                           ],
                         ),
                       ],
                     ),
 
-                    pw.SizedBox(height: 10),
+                    pw.SizedBox(height: 8),
 
                     // 2. Customer / Shop Name Grey Banner Bar
                     pw.Container(
                       width: double.infinity,
-                      padding: const pw.EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                       decoration: const pw.BoxDecoration(
                         color: PdfColor.fromInt(0xFF37474F), // Dark Slate
                         borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
@@ -185,7 +183,7 @@ class OrderPdfGenerator {
                         textAlign: pw.TextAlign.center,
                         style: pw.TextStyle(
                           font: fontBold,
-                          fontSize: 17,
+                          fontSize: 16,
                           color: PdfColors.white,
                           letterSpacing: 0.5,
                         ),
@@ -195,13 +193,13 @@ class OrderPdfGenerator {
                     // 3. Subtitle / Category Tagline (Hardcoded)
                     pw.Container(
                       width: double.infinity,
-                      padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       child: pw.Text(
                         subtitleText,
                         textAlign: pw.TextAlign.center,
                         style: pw.TextStyle(
                           font: fontBold,
-                          fontSize: 14,
+                          fontSize: 13,
                           letterSpacing: 1.2,
                           color: PdfColor.fromInt(0xFF1E293B),
                         ),
@@ -219,7 +217,7 @@ class OrderPdfGenerator {
                             '${AppStrings.orderDateLabel}.   ',
                             style: pw.TextStyle(
                               font: fontRegular,
-                              fontSize: 15,
+                              fontSize: 14,
                               color: PdfColors.black,
                             ),
                           ),
@@ -227,7 +225,7 @@ class OrderPdfGenerator {
                             dateText,
                             style: pw.TextStyle(
                               font: fontBold,
-                              fontSize: 15,
+                              fontSize: 14,
                               color: PdfColors.black,
                             ),
                           ),
@@ -245,7 +243,7 @@ class OrderPdfGenerator {
                           AppStrings.orderHeaderPrefix,
                           style: pw.TextStyle(
                             font: fontBold,
-                            fontSize: 16,
+                            fontSize: 15,
                             color: PdfColors.black,
                           ),
                         ),
@@ -255,7 +253,7 @@ class OrderPdfGenerator {
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(
                               font: fontBold,
-                              fontSize: 28,
+                              fontSize: 26,
                               color: PdfColor.fromInt(0xFFD32F2F), // Red
                             ),
                           ),
@@ -263,35 +261,35 @@ class OrderPdfGenerator {
                       ],
                     ),
 
-                    pw.SizedBox(height: 12),
+                    pw.SizedBox(height: 10),
 
-                    // 6. Large & Easy-To-Read Order Items Table
+                    // 6. Compact & Neat Order Items Table
                     pw.Table(
                       border: pw.TableBorder.all(
                         color: PdfColor.fromInt(0xFF005F73),
-                        width: 1.2,
+                        width: 1.0,
                       ),
                       columnWidths: const {
-                        0: pw.FixedColumnWidth(48),   // Sr#
+                        0: pw.FixedColumnWidth(42),   // Sr#
                         1: pw.FlexColumnWidth(4.0),   // Size.
                         2: pw.FlexColumnWidth(2.5),   // Gram
                         3: pw.FlexColumnWidth(2.5),   // Pipes
                       },
                       children: [
-                        // Table Header (Big Font & Height)
+                        // Table Header
                         pw.TableRow(
                           decoration: const pw.BoxDecoration(
                             color: PdfColor.fromInt(0xFF005F73), // Primary Teal header
                           ),
                           children: [
-                            _buildHeaderCell(AppStrings.srNoHeader, fontBold, 16),
-                            _buildHeaderCell(AppStrings.sizeHeader, fontBold, 16),
-                            _buildHeaderCell(AppStrings.gramHeader, fontBold, 16),
-                            _buildHeaderCell(AppStrings.pipesHeader, fontBold, 16),
+                            _buildHeaderCell(AppStrings.srNoHeader, fontBold, 13),
+                            _buildHeaderCell(AppStrings.sizeHeader, fontBold, 13),
+                            _buildHeaderCell(AppStrings.gramHeader, fontBold, 13),
+                            _buildHeaderCell(AppStrings.pipesHeader, fontBold, 13),
                           ],
                         ),
 
-                        // Table Rows (Big Fonts & Spacious Boxes)
+                        // Table Rows (Compact & Balanced Boxes)
                         for (int i = 0; i < itemsList.length; i++) ...[
                           _buildOrderRow(
                             srNo: i + 1,
@@ -304,7 +302,7 @@ class OrderPdfGenerator {
                       ],
                     ),
 
-                    pw.SizedBox(height: 12),
+                    pw.SizedBox(height: 10),
 
                     // Total Items Count Display
                     pw.Row(
@@ -312,8 +310,8 @@ class OrderPdfGenerator {
                       children: [
                         pw.Container(
                           padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
+                            horizontal: 10,
+                            vertical: 4,
                           ),
                           decoration: pw.BoxDecoration(
                             color: PdfColor.fromInt(0xFFE2E8F0),
@@ -325,7 +323,7 @@ class OrderPdfGenerator {
                             '${AppStrings.totalItemsPrefix}${itemsList.length}',
                             style: pw.TextStyle(
                               font: fontBold,
-                              fontSize: 13,
+                              fontSize: 12,
                               color: PdfColor.fromInt(0xFF005F73),
                             ),
                           ),
@@ -343,8 +341,8 @@ class OrderPdfGenerator {
                           crossAxisAlignment: pw.CrossAxisAlignment.center,
                           children: [
                             pw.Container(
-                              width: 170,
-                              height: 1.2,
+                              width: 160,
+                              height: 1,
                               color: PdfColors.black,
                             ),
                             pw.SizedBox(height: 4),
@@ -352,7 +350,7 @@ class OrderPdfGenerator {
                               AppStrings.authorizedSignature,
                               style: pw.TextStyle(
                                 font: fontRegular,
-                                fontSize: 11,
+                                fontSize: 10,
                                 color: PdfColors.grey800,
                               ),
                             ),
@@ -361,15 +359,15 @@ class OrderPdfGenerator {
                       ],
                     ),
 
-                    pw.SizedBox(height: 12),
+                    pw.SizedBox(height: 10),
 
                     // Bottom Teal Footer Strip inside frame
                     pw.Container(
-                      height: 18,
+                      height: 16,
                       width: double.infinity,
                       decoration: const pw.BoxDecoration(
                         color: PdfColor.fromInt(0xFF005F73),
-                        borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+                        borderRadius: pw.BorderRadius.all(pw.Radius.circular(2)),
                       ),
                     ),
                   ],
@@ -390,9 +388,9 @@ class OrderPdfGenerator {
     double fontSize,
   ) {
     return pw.Container(
-      height: 34,
+      height: 24,
       alignment: pw.Alignment.center,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: pw.Text(
         text,
         textAlign: pw.TextAlign.center,
@@ -424,21 +422,21 @@ class OrderPdfGenerator {
       ),
       children: [
         // Sr#
-        _buildCell('$srNo', fontRegular, 15, align: pw.TextAlign.center),
+        _buildCell('$srNo', fontRegular, 11, align: pw.TextAlign.center),
 
         // Size.
         _buildCell(
           sizeText,
           fontBold,
-          17,
+          12,
           align: sizeText.length > 15 ? pw.TextAlign.left : pw.TextAlign.center,
         ),
 
-        // Gram (Extra large font)
-        _buildCell(gramText, fontBold, 18, align: pw.TextAlign.center),
+        // Gram
+        _buildCell(gramText, fontBold, 12, align: pw.TextAlign.center),
 
-        // Pipes Quantity (Extra large font)
-        _buildCell(pipesText, fontBold, 18, align: pw.TextAlign.center),
+        // Pipes Quantity
+        _buildCell(pipesText, fontBold, 12, align: pw.TextAlign.center),
       ],
     );
   }
@@ -450,11 +448,11 @@ class OrderPdfGenerator {
     pw.TextAlign align = pw.TextAlign.center,
   }) {
     return pw.Container(
-      height: 34,
+      height: 22,
       alignment: align == pw.TextAlign.left
           ? pw.Alignment.centerLeft
           : pw.Alignment.center,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: pw.Text(
         text,
         textAlign: align,
