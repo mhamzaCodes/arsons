@@ -93,12 +93,13 @@ void main() {
       ...companyC,
     ]);
 
-    // Column 1 must be filled completely (25 rows: Company A 22 rows + Company B header & 2 items = 3)
+    // Column 1 must be filled completely (25 rows: 1 category header + Company A 22 rows + Company B header & 1 item = 2)
     expect(columns[0].length, equals(25));
+    expect(columns[0].first, isA<CategoryHeaderEntry>());
 
-    // Column 2 receives remaining 10 items of Company B directly WITHOUT a continued header bar (10 entries).
-    // Company C needs 16 rows which exceeds Column 2's remaining 15 spaces, so Company C moves completely to Page 2!
-    expect(columns[1].length, equals(10));
+    // Column 2 receives remaining 11 items of Company B directly WITHOUT a continued header bar (11 entries).
+    // Company C needs 16 rows which exceeds Column 2's remaining 14 spaces, so Company C moves completely to Page 2!
+    expect(columns[1].length, equals(11));
 
     // Verify first entry in Column 2 is a ProductItemEntry (no continued CompanyHeaderEntry)
     expect(columns[1].first, isA<ProductItemEntry>());

@@ -275,10 +275,48 @@ class _CompanyListViewState extends State<CompanyListView> {
             color: AppColors.textSecondary,
           ),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 18,
-          color: AppColors.primaryTeal,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.picture_as_pdf_rounded,
+                color: AppColors.primaryTeal,
+              ),
+              tooltip: AppStrings.generatePdf,
+              onPressed: () async {
+                final companyProducts = controller.products
+                    .where((p) =>
+                        p.category == _currentCategory && p.company == company)
+                    .toList();
+
+                if (companyProducts.isEmpty) {
+                  Get.snackbar(
+                    AppStrings.rateListTitle,
+                    AppStrings.noItemsFound,
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                  return;
+                }
+
+                final chosen = await PdfPreviewView.showOptionsDialog(context);
+                if (chosen != null) {
+                  Get.to(
+                    () => PdfPreviewView(
+                      products: companyProducts,
+                      includePurchaseRate: chosen,
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: AppColors.primaryTeal,
+            ),
+          ],
         ),
         onTap: () {
           Get.to(() => ProductListView(

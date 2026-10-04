@@ -38,6 +38,38 @@ class ProductListView extends StatelessWidget {
           iconTheme: const IconThemeData(color: AppColors.white),
           actions: [
             IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.white),
+              tooltip: AppStrings.generatePdf,
+              onPressed: () async {
+                final filteredList = controller.products.where((p) {
+                  bool matchesCat = p.category == categoryName;
+                  bool matchesComp = companyName == null ||
+                      companyName!.isEmpty ||
+                      p.company == companyName;
+                  return matchesCat && matchesComp;
+                }).toList();
+
+                if (filteredList.isEmpty) {
+                  Get.snackbar(
+                    AppStrings.rateListTitle,
+                    AppStrings.noItemsFound,
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                  return;
+                }
+
+                final chosen = await PdfPreviewView.showOptionsDialog(context);
+                if (chosen != null) {
+                  Get.to(
+                    () => PdfPreviewView(
+                      products: filteredList,
+                      includePurchaseRate: chosen,
+                    ),
+                  );
+                }
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.add, size: 28),
               onPressed: () {
                 Get.to(() => AddEditProductView(

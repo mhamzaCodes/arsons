@@ -47,6 +47,11 @@ const String _defaultNastaleeqFamily = AppConstants.fontFamily;
 // Row entry model
 abstract class PdfRowEntry {}
 
+class CategoryHeaderEntry extends PdfRowEntry {
+  final String categoryName;
+  CategoryHeaderEntry(this.categoryName);
+}
+
 class CompanyHeaderEntry extends PdfRowEntry {
   final String companyName;
   final bool continued;
@@ -417,44 +422,72 @@ class _RateListBuilder {
       Map<String, List<ProductModel>> grouped,
       List<String> companies,
       ) {
-    final columns = <List<PdfRowEntry>>[];
-    var itemNo = 1;
-
+    // Group products by Category -> Company -> List<ProductModel>
+    final categoryMap = <String, Map<String, List<ProductModel>>>{};
     for (final company in companies) {
       final items = grouped[company]!;
-      var i = 0;
-      var continued = false;
+      for (final item in items) {
+        final cat = item.category.trim().isNotEmpty ? item.category.trim() : 'عام';
+        final comp = item.company.trim().isNotEmpty ? item.company.trim() : 'عام';
+        categoryMap
+            .putIfAbsent(cat, () => <String, List<ProductModel>>{})
+            .putIfAbsent(comp, () => <ProductModel>[])
+            .add(item);
+      }
+    }
 
-      // Column 1 (even index: 0, 2, 4...) is always filled completely first.
-      // For Column 2 (odd index: 1, 3, 5...): if a company's products do not fit in
-      // Column 2's remaining space, move the complete company to the next page (Column 1 of next page).
-      final totalCompanyRows = items.length + 1;
-      if (columns.isNotEmpty && columns.last.isNotEmpty) {
-        final currentColumnIndex = columns.length - 1;
-        final isColumn2 = (currentColumnIndex % 2 == 1);
+    final columns = <List<PdfRowEntry>>[];
+    var itemNo = 1;
+    final sortedCategories = categoryMap.keys.toList()..sort();
 
-        if (isColumn2) {
-          final remainingSpace = _rowsPerColumn - columns.last.length;
-          if (totalCompanyRows <= _rowsPerColumn && remainingSpace < totalCompanyRows) {
-            columns.add(<PdfRowEntry>[]); // Move to next page
+    for (final category in sortedCategories) {
+      final companiesMap = categoryMap[category]!;
+      final sortedCompanies = companiesMap.keys.toList()..sort();
+      var categoryAdded = false;
+
+      for (final company in sortedCompanies) {
+        final items = companiesMap[company]!;
+        var i = 0;
+        var continued = false;
+
+        // Total rows required if company fits in 1 column:
+        // (1 category header if not added yet) + 1 company header + items
+        final totalCompanyRows = (categoryAdded ? 0 : 1) + 1 + items.length;
+
+        if (columns.isNotEmpty && columns.last.isNotEmpty) {
+          final currentColumnIndex = columns.length - 1;
+          final isColumn2 = (currentColumnIndex % 2 == 1);
+
+          if (isColumn2) {
+            final remainingSpace = _rowsPerColumn - columns.last.length;
+            if (totalCompanyRows <= _rowsPerColumn && remainingSpace < totalCompanyRows) {
+              columns.add(<PdfRowEntry>[]); // Move to next page
+            }
           }
         }
-      }
 
-      while (i < items.length) {
-        if (columns.isEmpty ||
-            _rowsPerColumn - columns.last.length < (continued ? 1 : 2)) {
-          columns.add(<PdfRowEntry>[]);
+        while (i < items.length) {
+          if (columns.isEmpty ||
+              _rowsPerColumn - columns.last.length < (continued ? 1 : 2)) {
+            columns.add(<PdfRowEntry>[]);
+          }
+          final col = columns.last;
+
+          if (!categoryAdded) {
+            col.add(CategoryHeaderEntry(category));
+            categoryAdded = true;
+          }
+
+          if (!continued) {
+            col.add(CompanyHeaderEntry(company, continued: false));
+          }
+
+          while (i < items.length && col.length < _rowsPerColumn) {
+            col.add(ProductItemEntry(items[i], itemNo++));
+            i++;
+          }
+          continued = true;
         }
-        final col = columns.last;
-        if (!continued) {
-          col.add(CompanyHeaderEntry(company, continued: false));
-        }
-        while (i < items.length && col.length < _rowsPerColumn) {
-          col.add(ProductItemEntry(items[i], itemNo++));
-          i++;
-        }
-        continued = true;
       }
     }
     return columns;
@@ -691,7 +724,10 @@ class _RateListBuilder {
     var shaded = false;
 
     for (final entry in entries) {
-      if (entry is CompanyHeaderEntry) {
+      if (entry is CategoryHeaderEntry) {
+        rows.add(_categoryRow(entry));
+        shaded = false;
+      } else if (entry is CompanyHeaderEntry) {
         rows.add(_companyRow(entry));
         shaded = false;
       } else if (entry is ProductItemEntry) {
@@ -706,6 +742,34 @@ class _RateListBuilder {
         mainAxisSize: pw.MainAxisSize.min,
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: rows,
+      ),
+    );
+  }
+
+  pw.Widget _categoryRow(CategoryHeaderEntry entry) {
+    const side = pw.BorderSide(color: _Palette.gold, width: 0.8);
+
+    return pw.Container(
+      width: _tableWidth,
+      height: _rowH,
+      decoration: const pw.BoxDecoration(
+        color: _Palette.navySoft,
+        border: pw.Border(left: side, right: side, bottom: side),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Container(width: 5, height: _rowH, color: _Palette.gold),
+          _cell(
+            width: _tableWidth - 5,
+            height: _rowH,
+            child: engine.text(
+              entry.categoryName,
+              size: 13.5,
+              color: _Palette.gold,
+              bold: true,
+            ),
+          ),
+        ],
       ),
     );
   }
