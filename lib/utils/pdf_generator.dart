@@ -22,24 +22,24 @@ class _Palette {
 }
 
 const double _colGap = 12;
-const double _marginH = 14;
-const double _marginTop = 14;
-const double _marginBottom = 14;
+const double _marginH = 12;
+const double _marginTop = 10;
+const double _marginBottom = 10;
 
-const double _tableWidth = 277.5;
+const double _tableWidth = 279.5;
 
 const double _noW = 24.0;
-const double _nameW = 121.5;
+const double _nameW = 123.5;
 const double _rateW = 44.0;
 
-const double _headerH = 88.0;
-const double _rulesH = 7.8;
-const double _afterHeaderGap = 6.0;
-const double _headH = 22.0;
-const double _footerH = 24.0;
-const double _rowH = 20.5;
+const double _headerH = 84.0;
+const double _rulesH = 7.0;
+const double _afterHeaderGap = 5.0;
+const double _headH = 26.5;
+const double _footerH = 22.0;
+const double _rowH = 26.0;
 
-const int _rowsPerColumn = 32;
+const int _rowsPerColumn = 25;
 
 const String _nastaleeqAsset = AppConstants.nastaleeqFontPath;
 const String _defaultNastaleeqFamily = AppConstants.fontFamily;
@@ -107,6 +107,28 @@ class PdfGenerator {
       pdf.addPage(page);
     }
     return pdf.save();
+  }
+
+  @visibleForTesting
+  static List<List<PdfRowEntry>> splitIntoColumnsForTesting(
+    List<ProductModel> products,
+  ) {
+    final grouped = <String, List<ProductModel>>{};
+    for (final p in products) {
+      final comp = p.company.trim().isNotEmpty ? p.company.trim() : 'عام';
+      grouped.putIfAbsent(comp, () => <ProductModel>[]).add(p);
+    }
+    final companies = grouped.keys.toList()..sort();
+    return _RateListBuilder(
+      products: products,
+      engine: _TextEngine(
+        useNastaleeq: false,
+        family: '',
+        vectorRegular: pw.Font.helvetica(),
+        vectorBold: pw.Font.helveticaBold(),
+      ),
+      theme: pw.ThemeData(),
+    )._splitIntoColumns(grouped, companies);
   }
 
   static Future<(pw.Font, pw.Font)> _loadVectorFonts({
@@ -403,12 +425,31 @@ class _RateListBuilder {
       var i = 0;
       var continued = false;
 
+      // Column 1 (even index: 0, 2, 4...) is always filled completely first.
+      // For Column 2 (odd index: 1, 3, 5...): if a company's products do not fit in
+      // Column 2's remaining space, move the complete company to the next page (Column 1 of next page).
+      final totalCompanyRows = items.length + 1;
+      if (columns.isNotEmpty && columns.last.isNotEmpty) {
+        final currentColumnIndex = columns.length - 1;
+        final isColumn2 = (currentColumnIndex % 2 == 1);
+
+        if (isColumn2) {
+          final remainingSpace = _rowsPerColumn - columns.last.length;
+          if (totalCompanyRows <= _rowsPerColumn && remainingSpace < totalCompanyRows) {
+            columns.add(<PdfRowEntry>[]); // Move to next page
+          }
+        }
+      }
+
       while (i < items.length) {
-        if (columns.isEmpty || _rowsPerColumn - columns.last.length < 2) {
+        if (columns.isEmpty ||
+            _rowsPerColumn - columns.last.length < (continued ? 1 : 2)) {
           columns.add(<PdfRowEntry>[]);
         }
         final col = columns.last;
-        col.add(CompanyHeaderEntry(company, continued: continued));
+        if (!continued) {
+          col.add(CompanyHeaderEntry(company, continued: false));
+        }
         while (i < items.length && col.length < _rowsPerColumn) {
           col.add(ProductItemEntry(items[i], itemNo++));
           i++;
@@ -676,7 +717,7 @@ class _RateListBuilder {
       divider: divider ? _Palette.navySoft : null,
       child: engine.text(
         label,
-        size: 9.5,
+        size: 12.0,
         color: PdfColors.white,
         bold: true,
       ),
@@ -720,7 +761,7 @@ class _RateListBuilder {
             height: _rowH,
             child: engine.text(
               label,
-              size: 10,
+              size: 14.0,
               color: PdfColors.white,
               bold: true,
             ),
@@ -746,7 +787,7 @@ class _RateListBuilder {
           height: _rowH,
           divider: first ? null : _Palette.line,
           child: value > 0
-              ? engine.number(_money(value), size: 9, color: color)
+              ? engine.number(_money(value), size: 13.0, color: color)
               : null,
         );
 
@@ -767,7 +808,7 @@ class _RateListBuilder {
             height: _rowH,
             alignment: pw.Alignment.centerRight,
             divider: _Palette.line,
-            child: engine.text(p.name, size: 9.5, color: _Palette.text),
+            child: engine.text(p.name, size: 13.0, color: _Palette.text, bold: true),
           ),
           _cell(
             width: _noW,
@@ -775,8 +816,8 @@ class _RateListBuilder {
             divider: _Palette.line,
             child: engine.number(
               '${entry.itemNumber}',
-              size: 8.5,
-              color: _Palette.muted,
+              size: 13.0,
+              color: _Palette.text,
             ),
           ),
         ],

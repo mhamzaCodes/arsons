@@ -18,7 +18,6 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _customerController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
-  final TextEditingController _subtitleController = TextEditingController();
   final TextEditingController _orderTitleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
 
@@ -39,10 +38,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
           ? order.customerName
           : AppStrings.defaultShopName;
       _mobileController.text =
-          order.mobile.isNotEmpty ? order.mobile : AppStrings.defaultMobileNumber;
-      _subtitleController.text = order.subtitle.isNotEmpty
-          ? order.subtitle
-          : AppStrings.defaultOrderSubtitle;
+          order.mobile.isNotEmpty ? order.mobile : AppStrings.phoneNumber;
       _orderTitleController.text = order.orderTitle;
       _dateController.text = order.date.isNotEmpty
           ? order.date
@@ -58,8 +54,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
     } else {
       // Default header values for orders
       _customerController.text = AppStrings.defaultShopName;
-      _mobileController.text = AppStrings.defaultMobileNumber;
-      _subtitleController.text = AppStrings.defaultOrderSubtitle;
+      _mobileController.text = AppStrings.phoneNumber;
       _orderTitleController.text = '';
       _dateController.text = DateFormat('dd/MM/yy').format(DateTime.now());
 
@@ -134,7 +129,6 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
   void dispose() {
     _customerController.dispose();
     _mobileController.dispose();
-    _subtitleController.dispose();
     _orderTitleController.dispose();
     _dateController.dispose();
     for (var controllers in _itemControllers) {
@@ -178,10 +172,8 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
           : AppStrings.defaultShopName,
       mobile: _mobileController.text.trim().isNotEmpty
           ? _mobileController.text.trim()
-          : AppStrings.defaultMobileNumber,
-      subtitle: _subtitleController.text.trim().isNotEmpty
-          ? _subtitleController.text.trim()
-          : AppStrings.defaultOrderSubtitle,
+          : AppStrings.phoneNumber,
+      subtitle: AppStrings.defaultOrderSubtitle,
       orderTitle: _orderTitleController.text.trim(),
       date: _dateController.text.trim(),
       createdAt: isEditing
@@ -290,11 +282,11 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                             color: AppColors.textDark,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        SizedBox(height: 3),
                         Text(
-                          AppStrings.defaultHeaderNoticeMobile,
+                          '${AppStrings.ownerProprietorInfoEnglish} | Mobile: ${AppStrings.phoneNumber}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11.5,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -329,16 +321,6 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
               ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? AppStrings.orderRequiredField : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _subtitleController,
-              decoration: const InputDecoration(
-                labelText: AppStrings.subtitleLabel,
-                hintText: AppStrings.subtitleHint,
-                prefixIcon: Icon(Icons.subtitles_rounded),
-                border: OutlineInputBorder(),
-              ),
             ),
             const SizedBox(height: 12),
             TextFormField(

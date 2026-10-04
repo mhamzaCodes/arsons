@@ -38,7 +38,10 @@ class InventoryController extends GetxController {
       final List<dynamic>? storedData =
           _storage.read<List<dynamic>>(AppConstants.storageKeyProducts);
 
-      if (storedData != null && storedData.isNotEmpty) {
+      if (storedData != null &&
+          storedData.isNotEmpty &&
+          (AppConstants.seedProducts.isEmpty ||
+              storedData.length >= AppConstants.seedProducts.length)) {
         products.value = storedData
             .map((item) => ProductModel.fromMap(Map<String, dynamic>.from(item)))
             .toList();
@@ -149,11 +152,16 @@ class InventoryController extends GetxController {
   // Reset data to seed defaults
   void resetToSeedData() {
     products.value = List.from(AppConstants.seedProducts);
+    for (var p in products) {
+      registerCategory(p.category);
+      registerCompanyForCategory(p.category, p.company);
+    }
     saveProductsToStorage();
     if (categories.isNotEmpty) {
       selectedCategory.value = categories.first;
     }
     selectedCompany.value = '';
+    update();
     Get.snackbar(AppStrings.reset, AppStrings.resetSuccessMessage);
   }
 
