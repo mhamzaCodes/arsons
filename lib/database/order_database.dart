@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../exports.dart';
 
 class OrderDatabase {
@@ -10,7 +12,12 @@ class OrderDatabase {
   static Database? _database;
   static final GetStorage _fallbackStorage = GetStorage('orders_database_storage');
 
-  OrderDatabase._init();
+  OrderDatabase._init() {
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+  }
 
   Future<Database?> get database async {
     if (_database != null) return _database;

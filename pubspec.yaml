@@ -22,6 +22,7 @@ dependencies:
   arabic_reshaper: ^0.0.1
   file_picker: ^8.1.7
   sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.3
   path: ^1.9.0
 
 dev_dependencies:

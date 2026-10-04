@@ -35,11 +35,18 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
   void _initFields() {
     if (isEditing) {
       final order = widget.orderToEdit!;
-      _customerController.text = order.customerName;
-      _mobileController.text = order.mobile;
-      _subtitleController.text = order.subtitle;
+      _customerController.text = order.customerName.isNotEmpty
+          ? order.customerName
+          : AppStrings.defaultShopName;
+      _mobileController.text =
+          order.mobile.isNotEmpty ? order.mobile : AppStrings.defaultMobileNumber;
+      _subtitleController.text = order.subtitle.isNotEmpty
+          ? order.subtitle
+          : AppStrings.defaultOrderSubtitle;
       _orderTitleController.text = order.orderTitle;
-      _dateController.text = order.date;
+      _dateController.text = order.date.isNotEmpty
+          ? order.date
+          : DateFormat('dd/MM/yy').format(DateTime.now());
 
       for (var item in order.items) {
         _addItemRow(
@@ -49,15 +56,58 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
         );
       }
     } else {
-      // Empty initial form fields for user to add from scratch
-      _customerController.text = '';
-      _mobileController.text = '';
-      _subtitleController.text = '';
+      // Default header values for orders
+      _customerController.text = AppStrings.defaultShopName;
+      _mobileController.text = AppStrings.defaultMobileNumber;
+      _subtitleController.text = AppStrings.defaultOrderSubtitle;
       _orderTitleController.text = '';
       _dateController.text = DateFormat('dd/MM/yy').format(DateTime.now());
 
       // Start with 1 empty item row
       _addItemRow();
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime initialDate = DateTime.now();
+    if (_dateController.text.isNotEmpty) {
+      try {
+        initialDate = DateFormat('dd/MM/yy').parse(_dateController.text);
+      } catch (_) {
+        try {
+          initialDate = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+        } catch (_) {}
+      }
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      locale: const Locale('en', 'US'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryTeal,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textDark,
+            ),
+          ),
+          child: Localizations.override(
+            context: context,
+            locale: const Locale('en', 'US'),
+            child: child!,
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _dateController.text = DateFormat('dd/MM/yy').format(picked);
+      });
     }
   }
 
@@ -123,9 +173,15 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
 
     return OrderModel(
       id: orderId,
-      customerName: _customerController.text.trim(),
-      mobile: _mobileController.text.trim(),
-      subtitle: _subtitleController.text.trim(),
+      customerName: _customerController.text.trim().isNotEmpty
+          ? _customerController.text.trim()
+          : AppStrings.defaultShopName,
+      mobile: _mobileController.text.trim().isNotEmpty
+          ? _mobileController.text.trim()
+          : AppStrings.defaultMobileNumber,
+      subtitle: _subtitleController.text.trim().isNotEmpty
+          ? _subtitleController.text.trim()
+          : AppStrings.defaultOrderSubtitle,
       orderTitle: _orderTitleController.text.trim(),
       date: _dateController.text.trim(),
       createdAt: isEditing
@@ -145,7 +201,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
     if (isEditing) {
       await controller.updateOrder(order);
       Get.snackbar(
-        AppStrings.successTitle,
+        AppStrings.orderSuccessTitle,
         AppStrings.orderUpdatedSuccess,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.primaryTeal,
@@ -154,7 +210,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
     } else {
       await controller.addOrder(order);
       Get.snackbar(
-        AppStrings.successTitle,
+        AppStrings.orderSuccessTitle,
         AppStrings.orderSavedSuccess,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.successGreen,
@@ -209,6 +265,47 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Permanent Header Info Box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderGrey),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.storefront_rounded,
+                      size: 22, color: AppColors.primaryTeal),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          AppStrings.defaultShopName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          AppStrings.defaultHeaderNoticeMobile,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.lock_rounded, size: 16, color: AppColors.textSecondary),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             const Text(
               AppStrings.orderDetails,
               style: TextStyle(
@@ -231,47 +328,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                 color: Colors.red,
               ),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? AppStrings.requiredField : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _customerController,
-              decoration: const InputDecoration(
-                labelText: AppStrings.customerNameLabel,
-                hintText: AppStrings.customerNameHint,
-                prefixIcon: Icon(Icons.storefront_rounded),
-                border: OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? AppStrings.requiredField : null,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _mobileController,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.mobileLabel,
-                      hintText: AppStrings.mobileHint,
-                      prefixIcon: Icon(Icons.phone_rounded),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _dateController,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.orderDateLabel,
-                      hintText: AppStrings.orderDateHint,
-                      prefixIcon: Icon(Icons.calendar_today_rounded),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
+                  (v == null || v.trim().isEmpty) ? AppStrings.orderRequiredField : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -282,6 +339,21 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                 prefixIcon: Icon(Icons.subtitles_rounded),
                 border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _dateController,
+              readOnly: true,
+              onTap: () => _selectDate(context),
+              decoration: const InputDecoration(
+                labelText: AppStrings.orderDateLabel,
+                hintText: AppStrings.orderDateHint,
+                prefixIcon: Icon(Icons.calendar_today_rounded, color: AppColors.primaryTeal),
+                suffixIcon: Icon(Icons.arrow_drop_down_rounded, color: AppColors.primaryTeal),
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? AppStrings.orderRequiredField : null,
             ),
           ],
         ),
@@ -327,7 +399,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
             ),
             child: const Center(
               child: Text(
-                'No items added yet. Click "+ Add Item" above.',
+                AppStrings.noItemsAdded,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
@@ -375,7 +447,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                         controller: controllers['size'],
                         decoration: const InputDecoration(
                           labelText: AppStrings.sizeColumnLabel,
-                          hintText: 'e.g. 1" or 3" SDR-64',
+                          hintText: AppStrings.sizeColumnHint,
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
@@ -388,7 +460,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                         controller: controllers['gram'],
                         decoration: const InputDecoration(
                           labelText: AppStrings.gramColumnLabel,
-                          hintText: 'e.g. 600',
+                          hintText: AppStrings.gramColumnHint,
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
@@ -401,7 +473,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                         controller: controllers['pipes'],
                         decoration: const InputDecoration(
                           labelText: AppStrings.pipesColumnLabel,
-                          hintText: 'e.g. 100',
+                          hintText: AppStrings.pipesColumnHint,
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
@@ -412,7 +484,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
                       icon: const Icon(Icons.delete_outline_rounded,
                           color: AppColors.deleteRed),
                       onPressed: () => _removeItemRow(index),
-                      tooltip: 'Remove Item',
+                      tooltip: AppStrings.removeItemTooltip,
                     ),
                   ],
                 ),
@@ -450,7 +522,7 @@ class _AddEditOrderViewState extends State<AddEditOrderView> {
             onPressed: () => _saveOrder(viewPdf: true),
             icon: const Icon(Icons.picture_as_pdf_rounded),
             label: const Text(
-              'Save & View PDF',
+              AppStrings.saveAndViewPdfButton,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             style: OutlinedButton.styleFrom(

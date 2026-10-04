@@ -30,6 +30,12 @@ class AppStrings {
   static const String customerNameHint = 'e.g. Asghar Hardware and sentry store Narang Mandi';
   static const String mobileLabel = 'Mobile Number';
   static const String mobileHint = 'e.g. 03004685524';
+  static const String defaultShopName = 'Asghar Hardware and sentry store Narang Mandi';
+  static const String defaultMobileNumber = '03004685524';
+  static const String defaultHeaderNoticeMobile = 'Mobile: 03004685524';
+  static const String defaultOrderSubtitle = 'UPVC PPRC PIPES & FITTINGS';
+  static const String defaultOrderTitle = 'POLO clear';
+  static const String defaultOrderDate = '02/02/26';
   static const String subtitleLabel = 'Subtitle / Category Tagline';
   static const String subtitleHint = 'e.g. UPVC PPRC PIPES & FITTINGS';
   static const String orderTitleLabel = 'Order Title / Brand Name';
@@ -38,12 +44,27 @@ class AppStrings {
   static const String orderDateHint = 'e.g. 02/02/26';
   static const String orderItemsSection = 'Order Items';
   static const String addItemRow = 'Add Item';
+  static const String noItemsAdded = 'No items added yet. Click "+ Add Item" above.';
   static const String sizeColumnLabel = 'Size / Description';
+  static const String sizeColumnHint = 'e.g. 1" or 3" SDR-64';
   static const String gramColumnLabel = 'Gram (Weight)';
+  static const String gramColumnHint = 'e.g. 600';
   static const String pipesColumnLabel = 'Pipes (Quantity)';
+  static const String pipesColumnHint = 'e.g. 100';
+  static const String removeItemTooltip = 'Remove Item';
   static const String srNoHeader = 'Sr#';
+  static const String sizeHeader = 'Size.';
+  static const String gramHeader = 'Gram';
+  static const String pipesHeader = 'Pipes';
+  static const String orderHeaderPrefix = 'ORDER.';
+  static const String haTradersPrefix = 'HA ';
+  static const String haTradersSuffix = 'Traders';
+  static const String mobilePrefix = 'Mobile.  ';
+  static const String totalItemsPrefix = 'Total Items: ';
+  static const String authorizedSignature = 'Authorized Signature';
   static const String saveOrderButton = 'Save Order';
   static const String updateOrderButton = 'Update Order';
+  static const String saveAndViewPdfButton = 'Save & View PDF';
   static const String viewPdfButton = 'View / Print PDF';
   static const String regeneratePdfButton = 'Regenerate PDF';
   static const String searchOrdersHint = 'Search orders by customer, title or mobile...';
@@ -53,6 +74,10 @@ class AppStrings {
   static const String orderSavedSuccess = 'Order saved successfully!';
   static const String orderUpdatedSuccess = 'Order updated successfully!';
   static const String orderDeletedSuccess = 'Order deleted successfully!';
+  static const String orderRequiredField = 'This field is required';
+  static const String orderSuccessTitle = 'Success';
+  static const String orderCancelButton = 'Cancel';
+  static const String orderPdfTitleSuffix = ' PDF';
 
   // Statistics
   static const String totalProducts = 'کل آئٹمز';

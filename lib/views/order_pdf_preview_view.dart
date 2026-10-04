@@ -15,7 +15,7 @@ class OrderPdfPreviewView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            '${order.orderTitle.isNotEmpty ? order.orderTitle : "Order"} PDF',
+            '${order.orderTitle.isNotEmpty ? order.orderTitle : "Order"}${AppStrings.orderPdfTitleSuffix}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -31,6 +31,7 @@ class OrderPdfPreviewView extends StatelessWidget {
         body: PdfPreview(
           build: (format) => OrderPdfGenerator.generateOrderPdf(order),
           allowPrinting: true,
+          canDebug: false,
           allowSharing: true,
           canChangePageFormat: false,
           canChangeOrientation: false,

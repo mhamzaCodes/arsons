@@ -311,14 +311,14 @@ class _OrdersViewState extends State<OrdersView> {
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: const Text(AppStrings.cancel),
+              child: const Text(AppStrings.orderCancelButton),
             ),
             ElevatedButton(
               onPressed: () async {
                 await controller.deleteOrder(order.id);
                 Get.back();
                 Get.snackbar(
-                  AppStrings.successTitle,
+                  AppStrings.orderSuccessTitle,
                   AppStrings.orderDeletedSuccess,
                   snackPosition: SnackPosition.BOTTOM,
                   backgroundColor: AppColors.deleteRed,
